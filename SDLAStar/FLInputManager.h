@@ -118,6 +118,8 @@ class InputManager
 	//dictionary holding a list of litener objs for each event type
 	std::map<EventListener::Event, std::vector<EventListener*>*> listeners; //pointer to vec of eventlisteners
 
+	std::map<EventListener::Event, std::vector<Command*>*> commands;
+
 	// Instance Variables
 public:
 	static InputManager* getInstance();
@@ -128,14 +130,21 @@ public:
 	InputManager();
 	~InputManager();
 
+	void AddKey(EventListener::Event, Command*, EventListener*);
+
 	void AddListener(EventListener::Event, EventListener*);
 	void Dispatch(EventListener::Event);
 	
 	void ProcessInput();
 
+	void AddCommand(EventListener::Event, Command*);
+	void Execute(EventListener::Event);
+
+private:
+	Command*& bindCommand(EventListener::Event);
+
 public:
 	Command* Key_UNKNOWN;
-
 	Command* Key_RETURN;
 	Command* Key_ESCAPE;
 	Command* Key_BACKSPACE;
@@ -173,7 +182,6 @@ public:
 	Command* Key_GREATER;
 	Command* Key_QUESTION;
 	Command* Key_AT;
-	// Skip uppercase letters
 	Command* Key_LEFTBRACKET;
 	Command* Key_BACKSLASH;
 	Command* Key_RIGHTBRACKET;
