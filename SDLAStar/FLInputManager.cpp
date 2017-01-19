@@ -30,7 +30,7 @@ void InputManager::AddListener(EventListener::Event evt, EventListener *listener
 	listeners[evt]->push_back(listener);
 }
 
-void InputManager::Dispatch(EventListener::Event evt)
+void InputManager::Dispatch(EventListener::Type type, EventListener::Event evt)
 {
 	if (listeners.find(evt) != listeners.end())
 	{
@@ -40,7 +40,29 @@ void InputManager::Dispatch(EventListener::Event evt)
 		}
 	}
 
-	Execute(evt);
+	CheckPrevious(type, evt);
+}
+
+void InputManager::SetPrevious(EventListener::Event evt, bool isHeld)
+{
+	previouslyHeld[evt] = isHeld;
+}
+
+void InputManager::CheckPrevious(EventListener::Type type, EventListener::Event evt)
+{
+	if (type == EventListener::Type::Release)
+	{
+		SetPrevious(evt, false);
+	}
+	
+	if (previouslyHeld[evt])
+	{
+		type = EventListener::Type::Hold;
+	}
+
+	std::cout << previouslyHeld[evt] << std::endl;
+
+	Execute(type, evt);
 }
 
 void InputManager::AddCommand(EventListener::Event evt, Command *command)
@@ -53,14 +75,22 @@ void InputManager::AddCommand(EventListener::Event evt, Command *command)
 	commands[evt]->push_back(command);
 }
 
-void InputManager::Execute(EventListener::Event evt)
+void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 {
 	if (commands.find(evt) != commands.end())
 	{
 		for (auto const &command : *commands[evt])
 		{
-			command->execute();
+			if (type == EventListener::Type::Press) { command->executePress(); }
+			else if (type == EventListener::Type::Release) { command->executeRelease(); }
+			else if (type == EventListener::Type::Hold) { command->executeHold(); }
+			else { command->execute(); }
 		}
+	}
+
+	if (type == EventListener::Type::Press)
+	{
+		SetPrevious(evt, true);
 	}
 }
 
@@ -156,99 +186,101 @@ Command*& InputManager::bindCommand(EventListener::Event evt)
 void InputManager::ProcessInput()
 {
 	SDL_Event evn;
+	EventListener::Type type;
+
+
+	const Uint8 *keys = SDL_GetKeyboardState(NULL);
+
 	while (SDL_PollEvent(&evn) != 0)
 	{
 		// Print Key Press
 		if (evn.type == SDL_KEYDOWN) { std::cout << evn.key.keysym.sym << std::endl; }
 
+		// Event Types
+		switch (evn.type)
+		{
+		case SDL_KEYDOWN: type = EventListener::Type::Press;	break;
+		case SDL_KEYUP: type = EventListener::Type::Release;	break;
+
+		default: type = EventListener::Type::None;				break;
+		}
+
 		// Key
 		switch (evn.key.keysym.sym)
 		{
-		case SDLK_UNKNOWN:		Dispatch(EventListener::Event::UNKNOWN);		break;
-		case SDLK_RETURN:		Dispatch(EventListener::Event::RETURN);			break;
-		case SDLK_ESCAPE:		Dispatch(EventListener::Event::ESCAPE);			break;
-		case SDLK_BACKSPACE:	Dispatch(EventListener::Event::BACKSPACE);		break;
-		case SDLK_TAB:			Dispatch(EventListener::Event::TAB);			break;
-		case SDLK_SPACE:		Dispatch(EventListener::Event::SPACE);			break;
-		case SDLK_EXCLAIM:		Dispatch(EventListener::Event::EXCLAIM);		break;
-		case SDLK_QUOTEDBL:		Dispatch(EventListener::Event::QUOTEDBL);		break;
-		case SDLK_HASH:			Dispatch(EventListener::Event::HASH);			break;
-		case SDLK_PERCENT:		Dispatch(EventListener::Event::PERCENT);		break;
-		case SDLK_DOLLAR:		Dispatch(EventListener::Event::DOLLAR);			break;
-		case SDLK_AMPERSAND:	Dispatch(EventListener::Event::AMPERSAND);		break;
-		case SDLK_QUOTE:		Dispatch(EventListener::Event::QUOTE);			break;
-		case SDLK_LEFTPAREN:	Dispatch(EventListener::Event::LEFTPAREN);		break;
-		case SDLK_RIGHTPAREN:	Dispatch(EventListener::Event::RIGHTPAREN);		break;
-		case SDLK_ASTERISK:		Dispatch(EventListener::Event::ASTERISK);		break;
-		case SDLK_PLUS:			Dispatch(EventListener::Event::PLUS);			break;
-		case SDLK_COMMA:		Dispatch(EventListener::Event::COMMA);			break;
-		case SDLK_MINUS:		Dispatch(EventListener::Event::MINUS);			break;
-		case SDLK_PERIOD:		Dispatch(EventListener::Event::PERIOD);			break;
-		case SDLK_SLASH:		Dispatch(EventListener::Event::SLASH);			break;
-		case SDLK_0:			Dispatch(EventListener::Event::NUM_0);			break;
-		case SDLK_1:			Dispatch(EventListener::Event::NUM_1);			break;
-		case SDLK_2:			Dispatch(EventListener::Event::NUM_2);			break;
-		case SDLK_3:			Dispatch(EventListener::Event::NUM_3);			break;
-		case SDLK_4:			Dispatch(EventListener::Event::NUM_4);			break;
-		case SDLK_5:			Dispatch(EventListener::Event::NUM_5);			break;
-		case SDLK_6:			Dispatch(EventListener::Event::NUM_6);			break;
-		case SDLK_7:			Dispatch(EventListener::Event::NUM_7);			break;
-		case SDLK_8:			Dispatch(EventListener::Event::NUM_8);			break;
-		case SDLK_9:			Dispatch(EventListener::Event::NUM_9);			break;
-		case SDLK_COLON:		Dispatch(EventListener::Event::COLON);			break;
-		case SDLK_SEMICOLON:	Dispatch(EventListener::Event::SEMICOLON);		break;
-		case SDLK_LESS:			Dispatch(EventListener::Event::LESS);			break;
-		case SDLK_EQUALS:		Dispatch(EventListener::Event::EQUALS);			break;
-		case SDLK_GREATER:		Dispatch(EventListener::Event::GREATER);		break;
-		case SDLK_QUESTION:		Dispatch(EventListener::Event::QUESTION);		break;
-		case SDLK_AT:			Dispatch(EventListener::Event::AT);				break;
-		case SDLK_LEFTBRACKET:	Dispatch(EventListener::Event::LEFTBRACKET);	break;
-		case SDLK_BACKSLASH:	Dispatch(EventListener::Event::BACKSLASH);		break;
-		case SDLK_RIGHTBRACKET: Dispatch(EventListener::Event::RIGHTBRACKET);	break;
-		case SDLK_CARET:		Dispatch(EventListener::Event::CARET);			break;
-		case SDLK_UNDERSCORE:	Dispatch(EventListener::Event::UNDERSCORE);		break;
-		case SDLK_BACKQUOTE:	Dispatch(EventListener::Event::BACKQUOTE);		break;
-		case SDLK_a:			Dispatch(EventListener::Event::a);				break;
-		case SDLK_b:			Dispatch(EventListener::Event::b);				break;
-		case SDLK_c:			Dispatch(EventListener::Event::c);				break;
-		case SDLK_d:			Dispatch(EventListener::Event::d);				break;
-		case SDLK_e:			Dispatch(EventListener::Event::e);				break;
-		case SDLK_f:			Dispatch(EventListener::Event::f);				break;
-		case SDLK_g:			Dispatch(EventListener::Event::g);				break;
-		case SDLK_h:			Dispatch(EventListener::Event::h);				break;
-		case SDLK_i:			Dispatch(EventListener::Event::i);				break;
-		case SDLK_j:			Dispatch(EventListener::Event::j);				break;
-		case SDLK_k:			Dispatch(EventListener::Event::k);				break;
-		case SDLK_l:			Dispatch(EventListener::Event::l);				break;
-		case SDLK_m:			Dispatch(EventListener::Event::m);				break;
-		case SDLK_n:			Dispatch(EventListener::Event::n);				break;
-		case SDLK_o:			Dispatch(EventListener::Event::o);				break;
-		case SDLK_p:			Dispatch(EventListener::Event::p);				break;
-		case SDLK_q:			Dispatch(EventListener::Event::q);				break;
-		case SDLK_r:			Dispatch(EventListener::Event::r);				break;
-		case SDLK_s:			Dispatch(EventListener::Event::s);				break;
-		case SDLK_t:			Dispatch(EventListener::Event::t);				break;
-		case SDLK_u:			Dispatch(EventListener::Event::u);				break;
-		case SDLK_v:			Dispatch(EventListener::Event::v);				break;
-		case SDLK_w:			Dispatch(EventListener::Event::w);				break;
-		case SDLK_x:			Dispatch(EventListener::Event::x);				break;
-		case SDLK_y:			Dispatch(EventListener::Event::y);				break;
-		case SDLK_z:			Dispatch(EventListener::Event::z);				break;
+		//case SDLK_UNKNOWN:		Dispatch(type, EventListener::Event::UNKNOWN);			break;
+		case SDLK_RETURN:		Dispatch(type, EventListener::Event::RETURN);			break;
+		case SDLK_ESCAPE:		Dispatch(type, EventListener::Event::ESCAPE);			break;
+		case SDLK_BACKSPACE:	Dispatch(type, EventListener::Event::BACKSPACE);		break;
+		case SDLK_TAB:			Dispatch(type, EventListener::Event::TAB);				break;
+		case SDLK_SPACE:		Dispatch(type, EventListener::Event::SPACE);			break;
+		case SDLK_EXCLAIM:		Dispatch(type, EventListener::Event::EXCLAIM);			break;
+		case SDLK_QUOTEDBL:		Dispatch(type, EventListener::Event::QUOTEDBL);			break;
+		case SDLK_HASH:			Dispatch(type, EventListener::Event::HASH);				break;
+		case SDLK_PERCENT:		Dispatch(type, EventListener::Event::PERCENT);			break;
+		case SDLK_DOLLAR:		Dispatch(type, EventListener::Event::DOLLAR);			break;
+		case SDLK_AMPERSAND:	Dispatch(type, EventListener::Event::AMPERSAND);		break;
+		case SDLK_QUOTE:		Dispatch(type, EventListener::Event::QUOTE);			break;
+		case SDLK_LEFTPAREN:	Dispatch(type, EventListener::Event::LEFTPAREN);		break;
+		case SDLK_RIGHTPAREN:	Dispatch(type, EventListener::Event::RIGHTPAREN);		break;
+		case SDLK_ASTERISK:		Dispatch(type, EventListener::Event::ASTERISK);			break;
+		case SDLK_PLUS:			Dispatch(type, EventListener::Event::PLUS);				break;
+		case SDLK_COMMA:		Dispatch(type, EventListener::Event::COMMA);			break;
+		case SDLK_MINUS:		Dispatch(type, EventListener::Event::MINUS);			break;
+		case SDLK_PERIOD:		Dispatch(type, EventListener::Event::PERIOD);			break;
+		case SDLK_SLASH:		Dispatch(type, EventListener::Event::SLASH);			break;
+		case SDLK_0:			Dispatch(type, EventListener::Event::NUM_0);			break;
+		case SDLK_1:			Dispatch(type, EventListener::Event::NUM_1);			break;
+		case SDLK_2:			Dispatch(type, EventListener::Event::NUM_2);			break;
+		case SDLK_3:			Dispatch(type, EventListener::Event::NUM_3);			break;
+		case SDLK_4:			Dispatch(type, EventListener::Event::NUM_4);			break;
+		case SDLK_5:			Dispatch(type, EventListener::Event::NUM_5);			break;
+		case SDLK_6:			Dispatch(type, EventListener::Event::NUM_6);			break;
+		case SDLK_7:			Dispatch(type, EventListener::Event::NUM_7);			break;
+		case SDLK_8:			Dispatch(type, EventListener::Event::NUM_8);			break;
+		case SDLK_9:			Dispatch(type, EventListener::Event::NUM_9);			break;
+		case SDLK_COLON:		Dispatch(type, EventListener::Event::COLON);			break;
+		case SDLK_SEMICOLON:	Dispatch(type, EventListener::Event::SEMICOLON);		break;
+		case SDLK_LESS:			Dispatch(type, EventListener::Event::LESS);				break;
+		case SDLK_EQUALS:		Dispatch(type, EventListener::Event::EQUALS);			break;
+		case SDLK_GREATER:		Dispatch(type, EventListener::Event::GREATER);			break;
+		case SDLK_QUESTION:		Dispatch(type, EventListener::Event::QUESTION);			break;
+		case SDLK_AT:			Dispatch(type, EventListener::Event::AT);				break;
+		case SDLK_LEFTBRACKET:	Dispatch(type, EventListener::Event::LEFTBRACKET);		break;
+		case SDLK_BACKSLASH:	Dispatch(type, EventListener::Event::BACKSLASH);		break;
+		case SDLK_RIGHTBRACKET: Dispatch(type, EventListener::Event::RIGHTBRACKET);		break;
+		case SDLK_CARET:		Dispatch(type, EventListener::Event::CARET);			break;
+		case SDLK_UNDERSCORE:	Dispatch(type, EventListener::Event::UNDERSCORE);		break;
+		case SDLK_BACKQUOTE:	Dispatch(type, EventListener::Event::BACKQUOTE);		break;
+		case SDLK_a:			Dispatch(type, EventListener::Event::a);				break;
+		case SDLK_b:			Dispatch(type, EventListener::Event::b);				break;
+		case SDLK_c:			Dispatch(type, EventListener::Event::c);				break;
+		case SDLK_d:			Dispatch(type, EventListener::Event::d);				break;
+		case SDLK_e:			Dispatch(type, EventListener::Event::e);				break;
+		case SDLK_f:			Dispatch(type, EventListener::Event::f);				break;
+		case SDLK_g:			Dispatch(type, EventListener::Event::g);				break;
+		case SDLK_h:			Dispatch(type, EventListener::Event::h);				break;
+		case SDLK_i:			Dispatch(type, EventListener::Event::i);				break;
+		case SDLK_j:			Dispatch(type, EventListener::Event::j);				break;
+		case SDLK_k:			Dispatch(type, EventListener::Event::k);				break;
+		case SDLK_l:			Dispatch(type, EventListener::Event::l);				break;
+		case SDLK_m:			Dispatch(type, EventListener::Event::m);				break;
+		case SDLK_n:			Dispatch(type, EventListener::Event::n);				break;
+		case SDLK_o:			Dispatch(type, EventListener::Event::o);				break;
+		case SDLK_p:			Dispatch(type, EventListener::Event::p);				break;
+		case SDLK_q:			Dispatch(type, EventListener::Event::q);				break;
+		case SDLK_r:			Dispatch(type, EventListener::Event::r);				break;
+		case SDLK_s:			Dispatch(type, EventListener::Event::s);				break;
+		case SDLK_t:			Dispatch(type, EventListener::Event::t);				break;
+		case SDLK_u:			Dispatch(type, EventListener::Event::u);				break;
+		case SDLK_v:			Dispatch(type, EventListener::Event::v);				break;
+		case SDLK_w:			Dispatch(type, EventListener::Event::w);				break;
+		case SDLK_x:			Dispatch(type, EventListener::Event::x);				break;
+		case SDLK_y:			Dispatch(type, EventListener::Event::y);				break;
+		case SDLK_z:			Dispatch(type, EventListener::Event::z);				break;
 
 		default: break;
 		}
 		break;
-
-		// Event Types
-		switch (evn.type)
-		{
-		case SDL_KEYDOWN:
-			break;
-
-		case SDL_KEYUP:
-			break;
-
-		default: break;
-		}
 	}
 }

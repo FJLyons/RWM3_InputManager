@@ -89,6 +89,13 @@ public:
 		z = 'z',
 	};
 
+	enum Type {
+		Press,
+		Release,
+		Hold,
+		None
+	};
+
 	virtual void onEvent(Event) = 0;
 };
 
@@ -97,9 +104,19 @@ class Command
 {
 public:
 	Command(std::function<void()> function) : m_function(function) {}
-	std::function<void()> m_function;
+	Command(std::function<void()> function, EventListener::Type type) : m_function(function), m_type(type) { m_functions.push_back(m_function); }
 	virtual ~Command() {}
-	virtual void execute() = 0;
+
+	std::function<void()> m_function;
+	std::vector<std::function<void()>> m_functions;
+	
+	EventListener::Type m_type;
+
+	virtual void execute() {};
+
+	virtual void executePress() {};
+	virtual void executeRelease() {};
+	virtual void executeHold() {};
 };
 
 //* Over ride command object with custom command
@@ -113,12 +130,38 @@ public:
 	}
 };
 
+class OverRideCommandType : public Command
+{
+public:
+	OverRideCommandType(std::function<void()> function, EventListener::Type type) : Command(function, type) {}
+
+	virtual void executePress()
+	{
+		for(int i = 0; m_type == EventListener::Type::Press && i < m_functions.size(); i++)
+			m_functions[i]();
+	}
+
+	virtual void executeRelease()
+	{
+		for (int i = 0; m_type == EventListener::Type::Release && i < m_functions.size(); i++)
+			m_functions[i]();
+	}
+
+	virtual void executeHold()
+	{
+		for (int i = 0; m_type == EventListener::Type::Hold && i < m_functions.size(); i++)
+			m_functions[i]();
+	}
+};
+
 class InputManager
 {
 	//dictionary holding a list of litener objs for each event type
 	std::map<EventListener::Event, std::vector<EventListener*>*> listeners; //pointer to vec of eventlisteners
 
 	std::map<EventListener::Event, std::vector<Command*>*> commands;
+
+	std::map<EventListener::Event, bool> previouslyHeld;
 
 	// Instance Variables
 public:
@@ -130,15 +173,18 @@ public:
 	InputManager();
 	~InputManager();
 
+	void ProcessInput();
+
 	void AddKey(EventListener::Event, Command*, EventListener*);
 
 	void AddListener(EventListener::Event, EventListener*);
-	void Dispatch(EventListener::Event);
-	
-	void ProcessInput();
+	void Dispatch(EventListener::Type, EventListener::Event);
+
+	void SetPrevious(EventListener::Event, bool);
+	void CheckPrevious(EventListener::Type, EventListener::Event);
 
 	void AddCommand(EventListener::Event, Command*);
-	void Execute(EventListener::Event);
+	void Execute(EventListener::Type, EventListener::Event);
 
 private:
 	Command*& bindCommand(EventListener::Event);

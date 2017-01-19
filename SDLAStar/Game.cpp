@@ -33,12 +33,12 @@ bool Game::init(Renderer rend) {
 	
 	// Events
 	EventListener::Event testEvent = EventListener::Event::ESCAPE;
-	Command* test = new SpaceCommand(std::bind(&Game::progressTest, this));//////////////////////////////////////////
+	Command* test = new SpaceCommand(std::bind(&Game::progressTest, this), EventListener::Type::Press);//////////////////////////////////////////
 
-	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player));
-	Command* a = new SpaceCommand(std::bind(&Player::movePlayerLeft, player));
-	Command* s = new SpaceCommand(std::bind(&Player::movePlayerDown, player));
-	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player));
+	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player), EventListener::Type::Hold);
+	Command* a = new SpaceCommand(std::bind(&Player::movePlayerLeft, player), EventListener::Type::Hold);
+	Command* s = new SpaceCommand(std::bind(&Player::movePlayerDown, player), EventListener::Type::Hold);
+	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player), EventListener::Type::Hold);
 
 	inputManager->AddKey(testEvent, test, this);
 	inputManager->AddKey(EventListener::Event::w, w, this);
