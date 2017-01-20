@@ -50,7 +50,6 @@ bool Game::init(Renderer rend) {
 	quit = false;
 	progress = false;
 
-
 	return true;
 }
 

@@ -8,12 +8,11 @@
 #include<thread>
 #include<functional>
 
-//* Abstract class for input keys
+//* Abstract class for input keys, input types, mouse and controller.
 class EventListener
 {
 public:
-	//list of possible events
-	//add your own events here
+	//* List of possible input events
 	enum Event {
 		UNKNOWN = 0,
 
@@ -87,109 +86,109 @@ public:
 		x = 'x',
 		y = 'y',
 		z = 'z',
+
+		//\\ Add your own events here
 	};
 
+	//* List of possible event types
 	enum Type {
 		Press,
 		Release,
 		Hold,
 		None
+
+		//\\ Add your own events here
 	};
 
+	//* Pure virtual function that can be overriden inside any class that inherites from EventListener if needed
+	//* Not required to execute keys, ideal for standard event dispatch/ listen procedure for custom events
 	virtual void onEvent(Event) = 0;
 };
 
 //* Abstract class for input commands
+//* Override examples are at the bottom of FLInputManager.h
 class Command
 {
 public:
+	//* Constructor for Custom/ once off calls
 	Command(std::function<void()> function) : m_function(function) {}
+	//* Constructor for Keys with Event Type
 	Command(std::function<void()> function, EventListener::Type type) : m_function(function), m_type(type) { m_functions.push_back(m_function); }
+	//* Default Destructor
 	virtual ~Command() {}
 
+	//* Function Object for executing custom function
 	std::function<void()> m_function;
+	//* Vector of functions for multiple functions per Key
 	std::vector<std::function<void()>> m_functions;
 	
+	//* Type of Event used to differentiate commands
 	EventListener::Type m_type;
 
+	//// Execution calls for firing custom function sent in, based on type
 	virtual void execute() {};
-
 	virtual void executePress() {};
 	virtual void executeRelease() {};
 	virtual void executeHold() {};
 };
 
-//* Over ride command object with custom command
-class OverRideCommand : public Command
-{
-public:
-	OverRideCommand(std::function<void()> function) : Command(function) {}
-	virtual void execute()
-	{
-		m_function();
-	}
-};
-
-class OverRideCommandType : public Command
-{
-public:
-	OverRideCommandType(std::function<void()> function, EventListener::Type type) : Command(function, type) {}
-
-	virtual void executePress()
-	{
-		for(int i = 0; m_type == EventListener::Type::Press && i < m_functions.size(); i++)
-			m_functions[i]();
-	}
-
-	virtual void executeRelease()
-	{
-		for (int i = 0; m_type == EventListener::Type::Release && i < m_functions.size(); i++)
-			m_functions[i]();
-	}
-
-	virtual void executeHold()
-	{
-		for (int i = 0; m_type == EventListener::Type::Hold && i < m_functions.size(); i++)
-			m_functions[i]();
-	}
-};
-
+//* Singleton class for input management
 class InputManager
 {
-	//dictionary holding a list of litener objs for each event type
-	std::map<EventListener::Event, std::vector<EventListener*>*> listeners; //pointer to vec of eventlisteners
-
-	std::map<EventListener::Event, std::vector<Command*>*> commands;
-
-	std::map<EventListener::Event, bool> previouslyHeld;
-
-	// Instance Variables
 public:
+	//* Default Constructor
+	InputManager();
+	//* Default Deconstructor
+	~InputManager();
+
+	//// Dictionaries
+private:
+	//* Dictionary holding a list of litener objects for each event
+	std::map<EventListener::Event, std::vector<EventListener*>*> listeners; //* Pointer to vector of EventListeners
+	
+	//* Dictionary holding a bool for each event
+	std::map<EventListener::Event, bool> beingHeld; //* Bool used to detect if the desired Event was previously being held
+
+	//* Dictionary holding a list of command objects for each event
+	std::map<EventListener::Event, std::vector<Command*>*> commands; //* Pointer to vector of Commands
+
+	//// Instance Variables
+public:
+	//* Used to get the Class Instance
 	static InputManager* getInstance();
 private:
+	//* Used to return the same instance of the Class
 	static InputManager* inputManagerInstance;
 
 public:
-	InputManager();
-	~InputManager();
-
+	//* Required to update the input
 	void ProcessInput();
 
+	//* Used to create a key event
 	void AddKey(EventListener::Event, Command*, EventListener*);
 
+private:
+	//* Create an EventListener object
 	void AddListener(EventListener::Event, EventListener*);
+	//* Find a specific Event listener in the listeners dictionary, and call its onEvent() function
 	void Dispatch(EventListener::Type, EventListener::Event);
 
+	//* Set the hold for a specific Event in the beingHeld dictionary 
 	void SetPrevious(EventListener::Event, bool);
+	//* Check to see if a specific Event is being held down
 	void CheckPrevious(EventListener::Type, EventListener::Event);
 
+	//* Create a Command object
 	void AddCommand(EventListener::Event, Command*);
+	//* Find a Command object in the commands dictionary, and call its execute function based on Event Type
 	void Execute(EventListener::Type, EventListener::Event);
 
-private:
+	//* Combine a Command* and an EventListener to work together
 	Command*& bindCommand(EventListener::Event);
 
+	//// Commands
 public:
+	//* Commands for each input 
 	Command* Key_UNKNOWN;
 	Command* Key_RETURN;
 	Command* Key_ESCAPE;
@@ -260,4 +259,63 @@ public:
 	Command* Key_x;
 	Command* Key_y;
 	Command* Key_z;
+
+	//\\ Add new Command* here for custom inputs
+};
+
+//* Custom Command Override Examples
+//* Over ride command object with custom command
+class OverRideCommand : public Command
+{
+public:
+	//* Default Constructor sets m_function to function passed in
+	OverRideCommand(std::function<void()> function) : Command(function) {}
+
+	//* Run Function sent in, and any other custom operations
+	virtual void execute()
+	{
+		//* Run Function
+		m_function();
+	}
+};
+
+//* Override command object with custom command and type
+class OverRideCommandType : public Command
+{
+public:
+	//* Default Constructor sets m_function to function passed in, and m_type to type passed in
+	OverRideCommandType(std::function<void()> function, EventListener::Type type) : Command(function, type) {}
+
+	//* Run Function sent in if key is pressed, and any other custom operations
+	virtual void executePress()
+	{
+		//* Loop to find every Key with a Press type
+		for (int i = 0; m_type == EventListener::Type::Press && i < m_functions.size(); i++)
+		{
+			//* Run Function if key is pressed
+			m_functions[i]();
+		}
+	}
+
+	//* Run Function sent in if key is released, and any other custom operations
+	virtual void executeRelease()
+	{
+		//* Loop to find every Key with a Release type
+		for (int i = 0; m_type == EventListener::Type::Release && i < m_functions.size(); i++)
+		{
+			//* Run Function if key is released
+			m_functions[i]();
+		}
+	}
+
+	//* Run Function sent in if key is held, and any other custom operations
+	virtual void executeHold()
+	{
+		//* Loop to find every Key with a Hold type
+		for (int i = 0; m_type == EventListener::Type::Hold && i < m_functions.size(); i++)
+		{
+			//* Run Function if key is held
+			m_functions[i]();
+		}
+	}
 };

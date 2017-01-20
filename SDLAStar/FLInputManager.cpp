@@ -1,25 +1,31 @@
 #include "stdafx.h"
 #include "FLInputManager.h"
 
+//* Set initial instance to be nullptr
 InputManager* InputManager::inputManagerInstance = nullptr;
 
+//* Default Constructor
 InputManager::InputManager()
 {
 }
 
+//* Default Deconstructor
 InputManager::~InputManager()
 {
 }
 
+//* Used to get the Class Instance
 InputManager* InputManager::getInstance()
 {
 	if (inputManagerInstance == nullptr)
 	{
 		inputManagerInstance = new InputManager();
 	}
+	//* Used to return the same instance of the Class
 	return inputManagerInstance;
 }
 
+//* Create an EventListener object
 void InputManager::AddListener(EventListener::Event evt, EventListener *listener)
 {
 	if (listeners.find(evt) == listeners.end())
@@ -30,6 +36,7 @@ void InputManager::AddListener(EventListener::Event evt, EventListener *listener
 	listeners[evt]->push_back(listener);
 }
 
+//* Find a specific Event listener in the listeners dictionary, and call its onEvent() function
 void InputManager::Dispatch(EventListener::Type type, EventListener::Event evt)
 {
 	if (listeners.find(evt) != listeners.end())
@@ -40,31 +47,40 @@ void InputManager::Dispatch(EventListener::Type type, EventListener::Event evt)
 		}
 	}
 
+	//*After a key is dispatched, see if it was previously held
 	CheckPrevious(type, evt);
 }
 
+//* Set the hold for a specific Event in the beingHeld dictionary 
 void InputManager::SetPrevious(EventListener::Event evt, bool isHeld)
 {
-	previouslyHeld[evt] = isHeld;
+	//* Set Event in map hold to be true or false
+	beingHeld[evt] = isHeld;
 }
 
+//* Check to see if a specific Event is being held down
 void InputManager::CheckPrevious(EventListener::Type type, EventListener::Event evt)
 {
+	//* Set Held to false for Event if the key was released
 	if (type == EventListener::Type::Release)
 	{
 		SetPrevious(evt, false);
 	}
 	
-	if (previouslyHeld[evt])
+	//* If Events hold is true, set Event Type to Hold
+	if (beingHeld[evt])
 	{
 		type = EventListener::Type::Hold;
 	}
 
-	std::cout << previouslyHeld[evt] << std::endl;
+	//// 0 if false, 1 if true - Uncomment if debugging hold functionality
+	//std::cout << beingHeld[evt] << std::endl;
 
+	//* Run the Events Execute, now that type has been determined
 	Execute(type, evt);
 }
 
+//* Create a Command object
 void InputManager::AddCommand(EventListener::Event evt, Command *command)
 {
 	if (commands.find(evt) == commands.end())
@@ -75,12 +91,14 @@ void InputManager::AddCommand(EventListener::Event evt, Command *command)
 	commands[evt]->push_back(command);
 }
 
+//* Find a Command object in the commands dictionary, and call its execute function based on Event Type
 void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 {
 	if (commands.find(evt) != commands.end())
 	{
 		for (auto const &command : *commands[evt])
 		{
+			//// Execution calls for firing custom function sent in
 			if (type == EventListener::Type::Press) { command->executePress(); }
 			else if (type == EventListener::Type::Release) { command->executeRelease(); }
 			else if (type == EventListener::Type::Hold) { command->executeHold(); }
@@ -88,24 +106,32 @@ void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 		}
 	}
 
+	//* Set Held to true for Event if the key was released, based on type
 	if (type == EventListener::Type::Press)
 	{
 		SetPrevious(evt, true);
 	}
 }
 
+//* Used to create a key event
 void InputManager::AddKey(EventListener::Event evt, Command* command, EventListener *listener)
 {
-	AddListener(evt, listener);
-
+	//* This shit is LIT yo!
+	//* Get a Command* and set Reference to that Command* 
 	Command*& toBind = bindCommand(evt);
+	//* get the referenced Command*, and assign the desired Command*
 	toBind = command;
 
+	//* Create a Listener for this Event
+	AddListener(evt, listener);
+	//* Create a Command for this Event
 	AddCommand(evt, toBind);
 }
 
+//* Combine a Command* and an EventListener to work together
 Command*& InputManager::bindCommand(EventListener::Event evt)
 {
+	//* Return a Command* based on the Event
 	switch (evt)
 	{
 	case SDLK_UNKNOWN:		return  Key_UNKNOWN;		break;
@@ -179,24 +205,27 @@ Command*& InputManager::bindCommand(EventListener::Event evt)
 	case SDLK_y:			return	Key_y;				break;
 	case SDLK_z:			return	Key_z;				break;
 
+	//\\ Add new Command* to return for custom Input Library Events here
+
 	default: break;
 	}
 }
 
+//* Required to update the input
 void InputManager::ProcessInput()
 {
+	//* New Input Library Event
 	SDL_Event evn;
+
+	//* New Event Listener Type
 	EventListener::Type type;
-
-
-	const Uint8 *keys = SDL_GetKeyboardState(NULL);
 
 	while (SDL_PollEvent(&evn) != 0)
 	{
-		// Print Key Press
+		//* Print Key Code on Press
 		if (evn.type == SDL_KEYDOWN) { std::cout << evn.key.keysym.sym << std::endl; }
 
-		// Event Types
+		//* Get Event Listener Type
 		switch (evn.type)
 		{
 		case SDL_KEYDOWN: type = EventListener::Type::Press;	break;
@@ -205,10 +234,10 @@ void InputManager::ProcessInput()
 		default: type = EventListener::Type::None;				break;
 		}
 
-		// Key
+		//* Get Key Event and call Input Manager Dispatch for that key
 		switch (evn.key.keysym.sym)
 		{
-		//case SDLK_UNKNOWN:		Dispatch(type, EventListener::Event::UNKNOWN);			break;
+		case SDLK_UNKNOWN:		Dispatch(type, EventListener::Event::UNKNOWN);			break;
 		case SDLK_RETURN:		Dispatch(type, EventListener::Event::RETURN);			break;
 		case SDLK_ESCAPE:		Dispatch(type, EventListener::Event::ESCAPE);			break;
 		case SDLK_BACKSPACE:	Dispatch(type, EventListener::Event::BACKSPACE);		break;
@@ -278,6 +307,8 @@ void InputManager::ProcessInput()
 		case SDLK_x:			Dispatch(type, EventListener::Event::x);				break;
 		case SDLK_y:			Dispatch(type, EventListener::Event::y);				break;
 		case SDLK_z:			Dispatch(type, EventListener::Event::z);				break;
+
+		//\\ Add new Input Library Events here for custom detection
 
 		default: break;
 		}
