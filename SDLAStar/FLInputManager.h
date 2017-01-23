@@ -1,6 +1,8 @@
 #pragma once
 #include "SDL.h"
 
+#include <iostream>
+#include <string>
 #include<map>
 #include<vector>
 #include<iostream>
@@ -86,6 +88,23 @@ public:
 		x = 'x',
 		y = 'y',
 		z = 'z',
+		// Controller
+		BUTTON_INVALID = 999,
+		BUTTON_A = 1000,
+		BUTTON_B,
+		BUTTON_X,
+		BUTTON_Y,
+		BUTTON_BACK,
+		BUTTON_GUIDE,
+		BUTTON_START,
+		BUTTON_LEFTSTICK,
+		BUTTON_RIGHTSTICK,
+		BUTTON_LEFTSHOULDER,
+		BUTTON_RIGHTSHOULDER,
+		BUTTON_DPAD_UP,
+		BUTTON_DPAD_DOWN,
+		BUTTON_DPAD_LEFT,
+		BUTTON_DPAD_RIGHT,
 
 		//\\ Add your own events here
 	};
@@ -186,6 +205,12 @@ private:
 	//* Combine a Command* and an EventListener to work together
 	Command*& bindCommand(EventListener::Event);
 
+	// Controller
+	bool mConnected = false;
+	SDL_GameController* mGameController = SDL_GameControllerOpen(0);
+	void AddController(int id);
+	void RemoveController(int id);
+
 	//// Commands
 public:
 	//* Commands for each input 
@@ -259,6 +284,23 @@ public:
 	Command* Key_x;
 	Command* Key_y;
 	Command* Key_z;
+	// Controller
+	Command* BUTTON_INVALID;
+	Command* BUTTON_A;
+	Command* BUTTON_B;
+	Command* BUTTON_X;
+	Command* BUTTON_Y;
+	Command* BUTTON_BACK;
+	Command* BUTTON_GUIDE;
+	Command* BUTTON_START;
+	Command* BUTTON_LEFTSTICK;
+	Command* BUTTON_RIGHTSTICK;
+	Command* BUTTON_LEFTSHOULDER;
+	Command* BUTTON_RIGHTSHOULDER;
+	Command* BUTTON_DPAD_UP;
+	Command* BUTTON_DPAD_DOWN;
+	Command* BUTTON_DPAD_LEFT;
+	Command* BUTTON_DPAD_RIGHT;
 
 	//\\ Add new Command* here for custom inputs
 };

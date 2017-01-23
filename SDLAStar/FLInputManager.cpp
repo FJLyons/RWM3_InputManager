@@ -209,6 +209,24 @@ Command*& InputManager::bindCommand(EventListener::Event evt)
 
 	default: break;
 	}
+
+	//* Controller
+	if (evt == EventListener::Event::BUTTON_INVALID) {			return BUTTON_INVALID; }
+	if (evt == EventListener::Event::BUTTON_A) {				return BUTTON_A; }
+	if (evt == EventListener::Event::BUTTON_B) {				return BUTTON_B; }
+	if (evt == EventListener::Event::BUTTON_X) {				return BUTTON_X; }
+	if (evt == EventListener::Event::BUTTON_Y) {				return BUTTON_Y; }
+	if (evt == EventListener::Event::BUTTON_BACK) {				return BUTTON_BACK; }
+	if (evt == EventListener::Event::BUTTON_GUIDE) {			return BUTTON_GUIDE; }
+	if (evt == EventListener::Event::BUTTON_START) {			return BUTTON_START; }
+	if (evt == EventListener::Event::BUTTON_LEFTSTICK) {		return BUTTON_LEFTSTICK; }
+	if (evt == EventListener::Event::BUTTON_RIGHTSTICK) {		return BUTTON_RIGHTSTICK; }
+	if (evt == EventListener::Event::BUTTON_LEFTSHOULDER) {		return BUTTON_LEFTSHOULDER; }
+	if (evt == EventListener::Event::BUTTON_RIGHTSHOULDER) {	return BUTTON_RIGHTSHOULDER; }
+	if (evt == EventListener::Event::BUTTON_DPAD_UP) {			return BUTTON_DPAD_UP; }
+	if (evt == EventListener::Event::BUTTON_DPAD_DOWN) {		return BUTTON_DPAD_DOWN; }
+	if (evt == EventListener::Event::BUTTON_DPAD_LEFT) {		return BUTTON_DPAD_LEFT; }
+	if (evt == EventListener::Event::BUTTON_DPAD_RIGHT) {		return BUTTON_DPAD_RIGHT; }
 }
 
 //* Required to update the input
@@ -218,18 +236,26 @@ void InputManager::ProcessInput()
 	SDL_Event evn;
 
 	//* New Event Listener Type
-	EventListener::Type type;
+	EventListener::Type type = EventListener::Type::None;
 
 	while (SDL_PollEvent(&evn) != 0)
 	{
 		//* Print Key Code on Press
 		if (evn.type == SDL_KEYDOWN) { std::cout << evn.key.keysym.sym << std::endl; }
+		else if (evn.type == SDL_CONTROLLERBUTTONDOWN)  {  std::cout << std::to_string(evn.cbutton.button) << std::endl;  }
+
 
 		//* Get Event Listener Type
 		switch (evn.type)
 		{
 		case SDL_KEYDOWN: type = EventListener::Type::Press;	break;
 		case SDL_KEYUP: type = EventListener::Type::Release;	break;
+
+		//* Controller
+		case SDL_CONTROLLERBUTTONDOWN: type = EventListener::Type::Press;	break;
+		case SDL_CONTROLLERBUTTONUP: type = EventListener::Type::Release;	break;
+		case SDL_CONTROLLERDEVICEADDED: AddController(evn.cdevice.which);	break;
+		case SDL_CONTROLLERDEVICEREMOVED: RemoveController(evn.cdevice.which); break;
 
 		default: type = EventListener::Type::None;				break;
 		}
@@ -308,10 +334,54 @@ void InputManager::ProcessInput()
 		case SDLK_y:			Dispatch(type, EventListener::Event::y);				break;
 		case SDLK_z:			Dispatch(type, EventListener::Event::z);				break;
 
-		//\\ Add new Input Library Events here for custom detection
-
 		default: break;
 		}
-		break;
+
+		//* Controller
+		if (mConnected)
+		{
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_INVALID) {			Dispatch(type, EventListener::Event::BUTTON_INVALID); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_A) {				Dispatch(type, EventListener::Event::BUTTON_A); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_B) {				Dispatch(type, EventListener::Event::BUTTON_B); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_X) {				Dispatch(type, EventListener::Event::BUTTON_X); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_Y) {				Dispatch(type, EventListener::Event::BUTTON_Y); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {				Dispatch(type, EventListener::Event::BUTTON_BACK); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_GUIDE) {			Dispatch(type, EventListener::Event::BUTTON_GUIDE); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_START) {			Dispatch(type, EventListener::Event::BUTTON_START); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSTICK) {		Dispatch(type, EventListener::Event::BUTTON_LEFTSTICK); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK) {		Dispatch(type, EventListener::Event::BUTTON_RIGHTSTICK); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) {		Dispatch(type, EventListener::Event::BUTTON_LEFTSHOULDER); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) {	Dispatch(type, EventListener::Event::BUTTON_RIGHTSHOULDER); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) {			Dispatch(type, EventListener::Event::BUTTON_DPAD_UP); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {		Dispatch(type, EventListener::Event::BUTTON_DPAD_DOWN); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {		Dispatch(type, EventListener::Event::BUTTON_DPAD_LEFT); }
+			if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {		Dispatch(type, EventListener::Event::BUTTON_DPAD_RIGHT); }
+		}
+
+		//\\ Add new Input Library Events here for custom detection
+
+
 	}
+}
+
+void InputManager::AddController(int id)
+{
+	if (SDL_IsGameController(id)) 
+	{
+		mGameController = SDL_GameControllerOpen(id);
+		std::cout << SDL_GameControllerMapping(mGameController) << std::endl;
+		mConnected = true;
+
+		if (mGameController) 
+		{
+			SDL_Joystick *joy = SDL_GameControllerGetJoystick(mGameController);
+			int instanceID = SDL_JoystickInstanceID(joy);
+		}
+	}
+}
+
+void InputManager::RemoveController(int id)
+{
+	SDL_GameControllerClose(mGameController);
+	mConnected = false;
 }

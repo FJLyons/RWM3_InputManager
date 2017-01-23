@@ -41,7 +41,7 @@ bool Game::init(Renderer rend) {
 	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player), EventListener::Type::Hold);
 
 	inputManager->AddKey(testEvent, test, this);
-	inputManager->AddKey(EventListener::Event::w, w, this);
+	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_UP, w, this);
 	inputManager->AddKey(EventListener::Event::a, a, this);
 	inputManager->AddKey(EventListener::Event::s, s, this);
 	inputManager->AddKey(EventListener::Event::d, d, this);
