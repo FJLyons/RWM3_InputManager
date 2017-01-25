@@ -1,5 +1,6 @@
 #pragma once
 #include "SDL.h"
+#include "LTimer.h"
 
 #include <iostream>
 #include <string>
@@ -9,6 +10,21 @@
 #include<queue>
 #include<thread>
 #include<functional>
+
+//* Vector2f Class for JoyStick value
+class Vector2f
+{
+public:
+	Vector2f(float _x, float _y) : x(_x), y(_y) {}
+	Vector2f() : x(0.f), y(0.f) {}
+
+	Vector2f operator*(float m) { x *= m; y *= m; return *this; }
+	Vector2f operator+(const Vector2f v) { x += v.x; y += v.y; return *this; }
+	float magnitude() { return sqrt(x * x + y * y); }
+
+	float x;
+	float y;
+};
 
 //* Abstract class for input keys, input types, mouse and controller.
 class EventListener
@@ -171,6 +187,8 @@ private:
 	//* Dictionary holding a list of command objects for each event
 	std::map<EventListener::Event, std::vector<Command*>*> commands; //* Pointer to vector of Commands
 
+	std::map<EventListener::Event, bool> controllerHeld; //* Pointer to vector of Commands
+
 	//// Instance Variables
 public:
 	//* Used to get the Class Instance
@@ -186,6 +204,7 @@ public:
 	//* Used to create a key event
 	void AddKey(EventListener::Event, Command*, EventListener*);
 
+	//* Input Functions
 private:
 	//* Create an EventListener object
 	void AddListener(EventListener::Event, EventListener*);
@@ -205,15 +224,46 @@ private:
 	//* Combine a Command* and an EventListener to work together
 	Command*& bindCommand(EventListener::Event);
 
-	// Controller
-	bool mConnected = false;
-	SDL_GameController* mGameController = SDL_GameControllerOpen(0);
+	//*Controller Variables
+private:
+	//* Timer
+	int countedFrames = 0; 
+	int controllerDelay = 1000;
+
+	//* Controller
+	SDL_GameController* mGameController = SDL_GameControllerOpen(0); 
+	SDL_Joystick* mJoyStick = SDL_JoystickOpen(0);
+
+	EventListener::Event mControllerButton;
+	bool mIsConnected = false;
+	bool mIsPressed = false;
+
+	//* Add Contoller if Detected
 	void AddController(int id);
+	//* Disconnect Controller
 	void RemoveController(int id);
+public:
+	//* Set Delay of Controller Update
+	void SetControllerDelay(int delayInMilliseconds);
+
+	//* Joy Stick Axis
+	int Stick_Dead_Zone = 8000;
+
+	float Stick_Left_X = 0;
+	float Stick_Left_Y = 0;
+	float Stick_Left_T = 0;
+	Vector2f getLeftStickVector();
+	float getLeftStickAngle();
+
+	float Stick_Right_X = 0;
+	float Stick_Right_Y = 0;
+	float Stick_Right_T = 0;
+	Vector2f getRightStickVector();
+	float getRightStickAngle();
 
 	//// Commands
 public:
-	//* Commands for each input 
+	// Keys
 	Command* Key_UNKNOWN;
 	Command* Key_RETURN;
 	Command* Key_ESCAPE;
@@ -305,6 +355,7 @@ public:
 	//\\ Add new Command* here for custom inputs
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //* Custom Command Override Examples
 //* Over ride command object with custom command
 class OverRideCommand : public Command
@@ -361,3 +412,4 @@ public:
 		}
 	}
 };
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
