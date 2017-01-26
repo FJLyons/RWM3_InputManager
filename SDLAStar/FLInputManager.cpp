@@ -227,6 +227,12 @@ Command*& InputManager::bindCommand(EventListener::Event evt)
 	if (evt == EventListener::Event::BUTTON_DPAD_DOWN) {		return BUTTON_DPAD_DOWN; }
 	if (evt == EventListener::Event::BUTTON_DPAD_LEFT) {		return BUTTON_DPAD_LEFT; }
 	if (evt == EventListener::Event::BUTTON_DPAD_RIGHT) {		return BUTTON_DPAD_RIGHT; }
+
+
+	if (evt == EventListener::Event::TRIGGER_SOFT_LEFT) { return BUTTON_DPAD_UP; }
+	if (evt == EventListener::Event::TRIGGER_LEFT) { return BUTTON_DPAD_DOWN; }
+	if (evt == EventListener::Event::TRIGGER_SOFT_RIGHT) { return BUTTON_DPAD_LEFT; }
+	if (evt == EventListener::Event::TRIGGER_RIGHT) { return BUTTON_DPAD_RIGHT; }
 }
 
 //* Required to update the input
@@ -369,7 +375,7 @@ void InputManager::ProcessInput()
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {		mControllerButton = EventListener::Event::BUTTON_DPAD_RIGHT; }
 				controllerHeld[mControllerButton] = true;
 				Dispatch(type, mControllerButton);
-				countedFrames = 0;
+				countedButtonFrames = -4000;
 			}
 
 			else if (evn.type == SDL_CONTROLLERBUTTONUP)
@@ -393,7 +399,7 @@ void InputManager::ProcessInput()
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) { mControllerButton = EventListener::Event::BUTTON_DPAD_RIGHT; }
 				controllerHeld[mControllerButton] = false;
 				Dispatch(type, mControllerButton);
-				countedFrames = 0;
+				countedButtonFrames = -4000;
 			}
 
 
@@ -402,90 +408,63 @@ void InputManager::ProcessInput()
 			if (evn.type == SDL_JOYAXISMOTION)
 			{
 				//* Left Stick X Axis
-				if (evn.jaxis.axis == 0)
-				{
-					if (evn.jaxis.value < -Stick_Dead_Zone || evn.jaxis.value > Stick_Dead_Zone) 
-					{
-						Stick_Left_X = evn.jaxis.value;
-						std::cout << "Left X : " << Stick_Left_X << std::endl;
-					}
-					else
-					{
-						Stick_Left_X = 0;
-					}
-				}
-
+				if (evn.jaxis.axis == 0) { Stick_Left_X = evn.jaxis.value; }
 				//* Left Stick Y Axis
-				if (evn.jaxis.axis == 1)
-				{
-					if (evn.jaxis.value < -Stick_Dead_Zone || evn.jaxis.value > Stick_Dead_Zone) 
-					{
-						Stick_Left_Y = evn.jaxis.value;
-						std::cout << "Left Y : " << Stick_Left_Y << std::endl;
-					}
-					else
-					{
-						Stick_Left_Y = 0;
-					}
-				}
-
+				if (evn.jaxis.axis == 1) { Stick_Left_Y = evn.jaxis.value; }
 				//* Left Trigger Axis
-				if (evn.jaxis.axis == 2)
-				{
-					Stick_Left_T = evn.jaxis.value;
-					std::cout << "Left T : " << Stick_Left_T << std::endl;
-				}
-
+				if (evn.jaxis.axis == 2) { Stick_Left_T = evn.jaxis.value; }
 				//* Right Stick X Axis
-				if (evn.jaxis.axis == 3)
-				{
-					if (evn.jaxis.value < -Stick_Dead_Zone || evn.jaxis.value > Stick_Dead_Zone) 
-					{
-						Stick_Right_X = evn.jaxis.value;
-						std::cout << "Right X : " << Stick_Right_X << std::endl;
-					}
-				}
-
+				if (evn.jaxis.axis == 3){ Stick_Right_X = evn.jaxis.value; }
 				//* Right Stick Y Axis
-				if (evn.jaxis.axis == 4)
-				{
-					if (evn.jaxis.value < -Stick_Dead_Zone || evn.jaxis.value > Stick_Dead_Zone) 
-					{
-						Stick_Right_Y = evn.jaxis.value;
-						std::cout << "Right Y : " << Stick_Right_X << std::endl;
-					}
+				if (evn.jaxis.axis == 4) { Stick_Right_Y = evn.jaxis.value; }
+				//* Right Trigger Axis
+				if (evn.jaxis.axis == 5) { Stick_Right_T = evn.jaxis.value; }
+
+				// Trigger Press/ Relase
+				if (evn.jaxis.axis == 2) {
+					if (getLeftTrigger() > 30000) { Dispatch(EventListener::Type::Press, EventListener::Event::TRIGGER_LEFT); }
+					else if (getLeftTrigger() < -30000) { Dispatch(EventListener::Type::Release, EventListener::Event::TRIGGER_LEFT); }
 				}
 
-				//* Right Trigger Axis
-				if (evn.jaxis.axis == 5)
-				{
-					Stick_Right_T = evn.jaxis.value;
-					std::cout << "Right T : " << Stick_Right_X << std::endl;
+				if (evn.jaxis.axis == 5) {
+					if (getRightTrigger() > 30000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+					else if (getRightTrigger() < -30000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
 				}
 			}
 		}
-
 
 		//\\ Add new Input Library Events here for custom detection
 
 	}
 
 	//* Controller Hold Update
-	countedFrames++;
-	if (countedFrames > controllerDelay)
+	countedButtonFrames++;
+	if (countedButtonFrames > controllerButtonDelay)
 	{
 		for (auto const &button : controllerHeld)
 		{
 			if (button.second) { Dispatch(EventListener::Type::Hold, button.first); }
-			else
-			{
-				controllerHeld[button.first] = false;
-			}
+			else { controllerHeld[button.first] = false; }
 		}
-		countedFrames = 0;
+		countedButtonFrames = 0;
 	}
 
-	std::cout << getLeftStickVector().x << "\t" << getLeftStickVector().y << std::endl;
+	countedTriggerFrames++;
+	if (countedTriggerFrames > controllerButtonDelay)
+	{
+		if (getLeftTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_LEFT); }
+		else if (getLeftTrigger() > -30000 && getLeftTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_LEFT); }
+
+		if (getRightTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+		else if (getRightTrigger() > -30000 && getRightTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_RIGHT); }
+
+		countedTriggerFrames = 0;
+	}
+
+	//std::cout << getLeftStickVector().x << "\t" << getLeftStickVector().y << std::endl;
+	//std::cout << getLeftStickVectorNormal().x << "\t" << getLeftStickVectorNormal().y << std::endl;
+	//std::cout << getLeftStickAngle() << std::endl;
+	//std::cout << getLeftTrigger() << "\t" << getRightTrigger() << std::endl;
 }
 
 //* Add Contoller if Detected
@@ -515,29 +494,81 @@ void InputManager::RemoveController(int id)
 //* Set Delay of Controller Update
 void InputManager::SetControllerDelay(int delay)
 {
-	controllerDelay = delay;
+	controllerButtonDelay = delay;
 }
 
-//* Return X, Y for Left Stick
+//* Return X, Y for Left Stick Vector
 Vector2f InputManager::getLeftStickVector()
 {
-	return Vector2f(Stick_Left_X, Stick_Left_Y);
+	if (Vector2f(Stick_Left_X, Stick_Left_Y).magnitude() > Stick_Dead_Zone)
+	{
+		return Vector2f(Stick_Left_X, Stick_Left_Y);
+	}
+	else
+	{
+		return Vector2f(0, 0);
+	}
 }
 
+//* Return X, Y for Left Stick Vector Normal
+Vector2f InputManager::getLeftStickVectorNormal()
+{
+	if (Vector2f(Stick_Left_X, Stick_Left_Y).magnitude() > Stick_Dead_Zone)
+	{
+		return Vector2f(Stick_Left_X, Stick_Left_Y).normalise();
+	}
+	else
+	{
+		return Vector2f(0, 0);
+	}
+}
+
+//* Return X, Y for Left Stick Angle
 float InputManager::getLeftStickAngle()
 {
 	return (180 - (180 * (atan2(Stick_Left_X, Stick_Left_Y)) / M_PI));
 }
 
-//* Return X, Y for Right Stick
-Vector2f InputManager::getRightStickVector()
+//* Return Left Trigger Value
+float InputManager::getLeftTrigger()
 {
-	return Vector2f(Stick_Right_X, Stick_Right_Y);
+	return Stick_Left_T;
 }
 
+//* Return X, Y for Right Stick Vector
+Vector2f InputManager::getRightStickVector()
+{
+	if (Vector2f(Stick_Right_X, Stick_Right_Y).magnitude() > Stick_Dead_Zone)
+	{
+		return Vector2f(Stick_Right_X, Stick_Right_Y);
+	}
+	else
+	{
+		return Vector2f(0, 0);
+	}
+}
+
+//* Return X, Y for Right Stick Vector Normal
+Vector2f InputManager::getRightStickVectorNormal()
+{
+	if (Vector2f(Stick_Right_X, Stick_Right_Y).magnitude() > Stick_Dead_Zone)
+	{
+		return Vector2f(Stick_Right_X, Stick_Right_Y);
+	}
+	else
+	{
+		return Vector2f(0, 0);
+	}
+}
+
+//* Return X, Y for Right Stick Angle
 float InputManager::getRightStickAngle()
 {
 	return (180 - (180 * (atan2(Stick_Right_X, Stick_Right_Y)) / M_PI));
 }
 
-
+//* Return Right Trigger Value
+float InputManager::getRightTrigger()
+{
+	return Stick_Right_T;
+}

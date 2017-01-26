@@ -11,7 +11,7 @@
 #include<thread>
 #include<functional>
 
-//* Vector2f Class for JoyStick value
+//* Vector2f Class for JoyStick values
 class Vector2f
 {
 public:
@@ -21,6 +21,12 @@ public:
 	Vector2f operator*(float m) { x *= m; y *= m; return *this; }
 	Vector2f operator+(const Vector2f v) { x += v.x; y += v.y; return *this; }
 	float magnitude() { return sqrt(x * x + y * y); }
+	float dotProduct(const Vector2f v2){ return (x * v2.x) + (y * v2.y); }
+
+	Vector2f normalise() {
+		if (magnitude() != 0) { return Vector2f((x / magnitude()), (y / magnitude())); }
+		else { return Vector2f(0, 0); }
+	}
 
 	float x;
 	float y;
@@ -121,6 +127,10 @@ public:
 		BUTTON_DPAD_DOWN,
 		BUTTON_DPAD_LEFT,
 		BUTTON_DPAD_RIGHT,
+		TRIGGER_SOFT_LEFT,
+		TRIGGER_LEFT,
+		TRIGGER_SOFT_RIGHT,
+		TRIGGER_RIGHT
 
 		//\\ Add your own events here
 	};
@@ -227,8 +237,10 @@ private:
 	//*Controller Variables
 private:
 	//* Timer
-	int countedFrames = 0; 
-	int controllerDelay = 1000;
+	int countedButtonFrames = 0;
+	int countedTriggerFrames = 0;
+	int controllerButtonDelay = 1000;
+	int controllerTriggerDelay = 1000;
 
 	//* Controller
 	SDL_GameController* mGameController = SDL_GameControllerOpen(0); 
@@ -247,19 +259,27 @@ public:
 	void SetControllerDelay(int delayInMilliseconds);
 
 	//* Joy Stick Axis
-	int Stick_Dead_Zone = 8000;
+	int Stick_Dead_Zone = 4000;
 
+	//* Left Stick Variables
 	float Stick_Left_X = 0;
 	float Stick_Left_Y = 0;
 	float Stick_Left_T = 0;
+	//* Left Stick Functions
 	Vector2f getLeftStickVector();
+	Vector2f getLeftStickVectorNormal();
 	float getLeftStickAngle();
+	float getLeftTrigger();
 
+	//* Right Stick Variables
 	float Stick_Right_X = 0;
 	float Stick_Right_Y = 0;
 	float Stick_Right_T = 0;
+	//* Left Stick Functions
 	Vector2f getRightStickVector();
+	Vector2f getRightStickVectorNormal();
 	float getRightStickAngle();
+	float getRightTrigger();
 
 	//// Commands
 public:
@@ -351,6 +371,10 @@ public:
 	Command* BUTTON_DPAD_DOWN;
 	Command* BUTTON_DPAD_LEFT;
 	Command* BUTTON_DPAD_RIGHT;
+	Command* TRIGGER_SOFT_LEFT;
+	Command* TRIGGER_LEFT;
+	Command* TRIGGER_SOFT_RIGHT;
+	Command* TRIGGER_RIGHT;
 
 	//\\ Add new Command* here for custom inputs
 };

@@ -35,15 +35,15 @@ bool Game::init(Renderer rend) {
 	EventListener::Event testEvent = EventListener::Event::ESCAPE;
 	Command* test = new SpaceCommand(std::bind(&Game::progressTest, this), EventListener::Type::Press);//////////////////////////////////////////
 
-	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player), EventListener::Type::Hold);
+	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player), EventListener::Type::Press);
 	Command* a = new SpaceCommand(std::bind(&Player::movePlayerLeft, player), EventListener::Type::Hold);
 	Command* s = new SpaceCommand(std::bind(&Player::movePlayerDown, player), EventListener::Type::Hold);
 	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player), EventListener::Type::Hold);
 
 	inputManager->AddKey(testEvent, test, this);
-	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_UP, w, this);
+	inputManager->AddKey(EventListener::Event::TRIGGER_LEFT, w, this);
 	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_LEFT, a, this);
-	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_DOWN, s, this);
+	inputManager->AddKey(EventListener::Event::TRIGGER_RIGHT, s, this);
 	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_RIGHT, d, this);
 
 	// Bools
