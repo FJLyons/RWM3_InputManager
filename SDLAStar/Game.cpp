@@ -32,19 +32,30 @@ bool Game::init(Renderer rend) {
 	player = new Player();
 	
 	// Events
-	EventListener::Event testEvent = EventListener::Event::ESCAPE;
-	Command* test = new SpaceCommand(std::bind(&Game::progressTest, this), EventListener::Type::Press);//////////////////////////////////////////
+	Event testEvent = Event::ESCAPE;
+	Command* test = new SpaceCommand(std::bind(&Game::progressTest, this), Press);//////////////////////////////////////////
 
-	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player), EventListener::Type::Press);
-	Command* a = new SpaceCommand(std::bind(&Player::movePlayerLeft, player), EventListener::Type::Hold);
-	Command* s = new SpaceCommand(std::bind(&Player::movePlayerDown, player), EventListener::Type::Hold);
-	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player), EventListener::Type::Hold);
+	Command* w = new SpaceCommand(std::bind(&Player::movePlayerUp, player), Hold);
+	Command* a = new SpaceCommand(std::bind(&Player::movePlayerLeft, player), Hold);
+	Command* s = new SpaceCommand(std::bind(&Player::movePlayerDown, player), Hold);
+	Command* d = new SpaceCommand(std::bind(&Player::movePlayerRight, player), Hold);
 
 	inputManager->AddKey(testEvent, test, this);
-	inputManager->AddKey(EventListener::Event::TRIGGER_LEFT, w, this);
-	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_LEFT, a, this);
-	inputManager->AddKey(EventListener::Event::TRIGGER_RIGHT, s, this);
-	inputManager->AddKey(EventListener::Event::BUTTON_DPAD_RIGHT, d, this);
+	inputManager->AddKey(BUTTON_DPAD_UP, w, this);
+	inputManager->AddKey(BUTTON_DPAD_LEFT, a, this);
+	inputManager->AddKey(BUTTON_DPAD_DOWN, s, this);
+	inputManager->AddKey(BUTTON_DPAD_RIGHT, d, this);
+	inputManager->AddKey(Event::w, w, this);
+	inputManager->AddKey(Event::a, a, this);
+	inputManager->AddKey(Event::s, s, this);
+	inputManager->AddKey(Event::d, d, this);
+
+
+	Command* m = new SpaceCommand(std::bind(&Player::movePlayerUp, player), Press);
+	inputManager->AddKey(Event::MOUSE_WHEEL_UP, m, this);
+
+	Command* n = new SpaceCommand(std::bind(&Player::movePlayerDown, player), Press);
+	inputManager->AddKey(Event::MOUSE_WHEEL_DOWN, n, this);
 
 	// Bools
 	quit = false;
@@ -105,7 +116,10 @@ void Game::loop()
 // Event manager
 void Game::onEvent(EventListener::Event evt)
 {
-
+	switch (evt)
+	{
+	case ESCAPE: inputManager->saveFile();
+	}
 }
 
 // Close app

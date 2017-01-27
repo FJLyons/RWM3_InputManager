@@ -1,8 +1,9 @@
 #pragma once
 #include "SDL.h"
-#include "LTimer.h"
 
 #include <iostream>
+#include <fstream>
+#include <cstring>
 #include <string>
 #include<map>
 #include<vector>
@@ -130,7 +131,13 @@ public:
 		TRIGGER_SOFT_LEFT,
 		TRIGGER_LEFT,
 		TRIGGER_SOFT_RIGHT,
-		TRIGGER_RIGHT
+		TRIGGER_RIGHT,
+		// Mouse
+		MOUSE_LEFT = 2001, // A Space Odyssey
+		MOUSE_RIGHT,
+		MOUSE_MIDDLE,
+		MOUSE_WHEEL_UP,
+		MOUSE_WHEEL_DOWN
 
 		//\\ Add your own events here
 	};
@@ -197,7 +204,8 @@ private:
 	//* Dictionary holding a list of command objects for each event
 	std::map<EventListener::Event, std::vector<Command*>*> commands; //* Pointer to vector of Commands
 
-	std::map<EventListener::Event, bool> controllerHeld; //* Pointer to vector of Commands
+	 //* Dictionary holding a bool for each event
+	std::map<EventListener::Event, bool> controllerHeld; //* Bool used to detect if the desired Event was previously being held
 
 	//// Instance Variables
 public:
@@ -213,11 +221,11 @@ public:
 
 	//* Used to create a key event
 	void AddKey(EventListener::Event, Command*, EventListener*);
+	//* Create an EventListener object
+	void AddListener(EventListener::Event, EventListener*);
 
 	//* Input Functions
 private:
-	//* Create an EventListener object
-	void AddListener(EventListener::Event, EventListener*);
 	//* Find a specific Event listener in the listeners dictionary, and call its onEvent() function
 	void Dispatch(EventListener::Type, EventListener::Event);
 
@@ -236,16 +244,17 @@ private:
 
 	//*Controller Variables
 private:
-	//* Timer
+	//* Controller Timers
 	int countedButtonFrames = 0;
 	int countedTriggerFrames = 0;
-	int controllerButtonDelay = 1000;
-	int controllerTriggerDelay = 1000;
+	int controllerButtonDelay = 500;
+	int controllerTriggerDelay = 500;
 
 	//* Controller
 	SDL_GameController* mGameController = SDL_GameControllerOpen(0); 
 	SDL_Joystick* mJoyStick = SDL_JoystickOpen(0);
 
+	//* Used to get current Controller event for the map and see if it's being held
 	EventListener::Event mControllerButton;
 	bool mIsConnected = false;
 	bool mIsPressed = false;
@@ -280,6 +289,24 @@ public:
 	Vector2f getRightStickVectorNormal();
 	float getRightStickAngle();
 	float getRightTrigger();
+
+	// Logger
+private:
+	std::string logFileName;
+	std::vector<std::string> logFileValues;
+
+	void logEvent(std::string str);
+	void createMap();
+	std::string getTimeStamp(bool save);
+
+	std::map<EventListener::Event, std::string> keyNames;
+	std::map<EventListener::Type, std::string> keyTypes;
+
+	EventListener::Event previousEvent;
+	float holdDuration = 0;
+
+public:
+	void saveFile();
 
 	//// Commands
 public:
@@ -355,29 +382,48 @@ public:
 	Command* Key_y;
 	Command* Key_z;
 	// Controller
-	Command* BUTTON_INVALID;
-	Command* BUTTON_A;
-	Command* BUTTON_B;
-	Command* BUTTON_X;
-	Command* BUTTON_Y;
-	Command* BUTTON_BACK;
-	Command* BUTTON_GUIDE;
-	Command* BUTTON_START;
-	Command* BUTTON_LEFTSTICK;
-	Command* BUTTON_RIGHTSTICK;
-	Command* BUTTON_LEFTSHOULDER;
-	Command* BUTTON_RIGHTSHOULDER;
-	Command* BUTTON_DPAD_UP;
-	Command* BUTTON_DPAD_DOWN;
-	Command* BUTTON_DPAD_LEFT;
-	Command* BUTTON_DPAD_RIGHT;
-	Command* TRIGGER_SOFT_LEFT;
-	Command* TRIGGER_LEFT;
-	Command* TRIGGER_SOFT_RIGHT;
-	Command* TRIGGER_RIGHT;
+	Command* Button_INVALID;
+	Command* Button_A;
+	Command* Button_B;
+	Command* Button_X;
+	Command* Button_Y;
+	Command* Button_BACK;
+	Command* Button_GUIDE;
+	Command* Button_START;
+	Command* Button_LEFTSTICK;
+	Command* Button_RIGHTSTICK;
+	Command* Button_LEFTSHOULDER;
+	Command* Button_RIGHTSHOULDER;
+	Command* Button_DPAD_UP;
+	Command* Button_DPAD_DOWN;
+	Command* Button_DPAD_LEFT;
+	Command* Button_DPAD_RIGHT;
+	Command* Trigger_SOFT_LEFT;
+	Command* Trigger_LEFT;
+	Command* Trigger_SOFT_RIGHT;
+	Command* Trigger_RIGHT;
+	// Mouse
+	Command* Mouse_Left;
+	Command* Mouse_Right;
+	Command* Mouse_Middle;
+	Command* Mouse_Wheel_Up;
+	Command* Mouse_Wheel_Down;
+
 
 	//\\ Add new Command* here for custom inputs
 };
+
+
+
+
+
+
+
+
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //* Custom Command Override Examples

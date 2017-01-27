@@ -7,6 +7,7 @@ InputManager* InputManager::inputManagerInstance = nullptr;
 //* Default Constructor
 InputManager::InputManager()
 {
+	createMap();
 }
 
 //* Default Deconstructor
@@ -94,6 +95,39 @@ void InputManager::AddCommand(EventListener::Event evt, Command *command)
 //* Find a Command object in the commands dictionary, and call its execute function based on Event Type
 void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 {
+	if (evt != 0)
+	{
+
+		if (type != EventListener::Type::Hold)
+		{
+			std::string newLine =
+				keyNames[evt] + ","
+				+ keyTypes[type] + ","
+				+ "" + ","
+				+ getTimeStamp(false);
+			logEvent(newLine);
+			previousEvent = evt;
+		}
+
+		else if (type == EventListener::Type::Hold)
+		{
+			holdDuration++;
+			logFileValues.pop_back();
+			std::string newLine =
+				keyNames[evt] + ","
+				+ keyTypes[type] + ","
+				+ std::to_string(holdDuration / 20) + ","
+				+ getTimeStamp(false);
+			logEvent(newLine);
+			previousEvent = evt;
+		}
+		if (previousEvent == evt && type == EventListener::Type::Release)
+		{
+			holdDuration = 0;
+		}
+	}
+
+
 	if (commands.find(evt) != commands.end())
 	{
 		for (auto const &command : *commands[evt])
@@ -210,29 +244,36 @@ Command*& InputManager::bindCommand(EventListener::Event evt)
 	default: break;
 	}
 
-	//* Controller
-	if (evt == EventListener::Event::BUTTON_INVALID) {			return BUTTON_INVALID; }
-	if (evt == EventListener::Event::BUTTON_A) {				return BUTTON_A; }
-	if (evt == EventListener::Event::BUTTON_B) {				return BUTTON_B; }
-	if (evt == EventListener::Event::BUTTON_X) {				return BUTTON_X; }
-	if (evt == EventListener::Event::BUTTON_Y) {				return BUTTON_Y; }
-	if (evt == EventListener::Event::BUTTON_BACK) {				return BUTTON_BACK; }
-	if (evt == EventListener::Event::BUTTON_GUIDE) {			return BUTTON_GUIDE; }
-	if (evt == EventListener::Event::BUTTON_START) {			return BUTTON_START; }
-	if (evt == EventListener::Event::BUTTON_LEFTSTICK) {		return BUTTON_LEFTSTICK; }
-	if (evt == EventListener::Event::BUTTON_RIGHTSTICK) {		return BUTTON_RIGHTSTICK; }
-	if (evt == EventListener::Event::BUTTON_LEFTSHOULDER) {		return BUTTON_LEFTSHOULDER; }
-	if (evt == EventListener::Event::BUTTON_RIGHTSHOULDER) {	return BUTTON_RIGHTSHOULDER; }
-	if (evt == EventListener::Event::BUTTON_DPAD_UP) {			return BUTTON_DPAD_UP; }
-	if (evt == EventListener::Event::BUTTON_DPAD_DOWN) {		return BUTTON_DPAD_DOWN; }
-	if (evt == EventListener::Event::BUTTON_DPAD_LEFT) {		return BUTTON_DPAD_LEFT; }
-	if (evt == EventListener::Event::BUTTON_DPAD_RIGHT) {		return BUTTON_DPAD_RIGHT; }
+	//* Controller Buttons
+	if (evt == EventListener::Event::BUTTON_INVALID) {			return Button_INVALID; }
+	if (evt == EventListener::Event::BUTTON_A) {				return Button_A; }
+	if (evt == EventListener::Event::BUTTON_B) {				return Button_B; }
+	if (evt == EventListener::Event::BUTTON_X) {				return Button_X; }
+	if (evt == EventListener::Event::BUTTON_Y) {				return Button_Y; }
+	if (evt == EventListener::Event::BUTTON_BACK) {				return Button_BACK; }
+	if (evt == EventListener::Event::BUTTON_GUIDE) {			return Button_GUIDE; }
+	if (evt == EventListener::Event::BUTTON_START) {			return Button_START; }
+	if (evt == EventListener::Event::BUTTON_LEFTSTICK) {		return Button_LEFTSTICK; }
+	if (evt == EventListener::Event::BUTTON_RIGHTSTICK) {		return Button_RIGHTSTICK; }
+	if (evt == EventListener::Event::BUTTON_LEFTSHOULDER) {		return Button_LEFTSHOULDER; }
+	if (evt == EventListener::Event::BUTTON_RIGHTSHOULDER) {	return Button_RIGHTSHOULDER; }
+	if (evt == EventListener::Event::BUTTON_DPAD_UP) {			return Button_DPAD_UP; }
+	if (evt == EventListener::Event::BUTTON_DPAD_DOWN) {		return Button_DPAD_DOWN; }
+	if (evt == EventListener::Event::BUTTON_DPAD_LEFT) {		return Button_DPAD_LEFT; }
+	if (evt == EventListener::Event::BUTTON_DPAD_RIGHT) {		return Button_DPAD_RIGHT; }
 
+	//* Controller Triggers
+	if (evt == EventListener::Event::TRIGGER_SOFT_LEFT) {		return Button_DPAD_UP; }
+	if (evt == EventListener::Event::TRIGGER_LEFT) {			return Button_DPAD_DOWN; }
+	if (evt == EventListener::Event::TRIGGER_SOFT_RIGHT) {		return Button_DPAD_LEFT; }
+	if (evt == EventListener::Event::TRIGGER_RIGHT) {			return Button_DPAD_RIGHT; }
 
-	if (evt == EventListener::Event::TRIGGER_SOFT_LEFT) { return BUTTON_DPAD_UP; }
-	if (evt == EventListener::Event::TRIGGER_LEFT) { return BUTTON_DPAD_DOWN; }
-	if (evt == EventListener::Event::TRIGGER_SOFT_RIGHT) { return BUTTON_DPAD_LEFT; }
-	if (evt == EventListener::Event::TRIGGER_RIGHT) { return BUTTON_DPAD_RIGHT; }
+	//* Mouse Buttons
+	if (evt == EventListener::Event::MOUSE_LEFT){				return  Mouse_Left;	}
+	if (evt == EventListener::Event::MOUSE_RIGHT) {				return  Mouse_Right;}
+	if (evt == EventListener::Event::MOUSE_MIDDLE) {			return  Mouse_Middle;}
+	if (evt == EventListener::Event::MOUSE_WHEEL_UP) {			return  Mouse_Wheel_Up; }
+	if (evt == EventListener::Event::MOUSE_WHEEL_DOWN) {		return  Mouse_Wheel_Down; }
 }
 
 //* Required to update the input
@@ -249,6 +290,8 @@ void InputManager::ProcessInput()
 		//* Print Key Code on Press
 		if (evn.type == SDL_KEYDOWN) { std::cout << evn.key.keysym.sym << std::endl; }
 		else if (evn.type == SDL_CONTROLLERBUTTONDOWN)  {  std::cout << std::to_string(evn.cbutton.button) << std::endl;  }
+		else if (evn.type == SDL_MOUSEBUTTONDOWN) { 
+			std::cout << std::to_string(evn.button.button) << std::endl; }
 
 
 		//* Get Event Listener Type
@@ -337,14 +380,11 @@ void InputManager::ProcessInput()
 		default: break;
 		}
 
-
 		//* Controller
 		//* Get Event Listener Type
 		switch (evn.type)
 		{
-			//* Controller
-		case SDL_CONTROLLERBUTTONDOWN: type = EventListener::Type::Press;	mIsPressed = true;  break;
-		case SDL_CONTROLLERBUTTONUP: type = EventListener::Type::Release;	mIsPressed = false; break;
+			//* Controller Connect / Disconnect
 		case SDL_CONTROLLERDEVICEADDED: AddController(evn.cdevice.which);	break;
 		case SDL_CONTROLLERDEVICEREMOVED: RemoveController(evn.cdevice.which); break;
 
@@ -354,9 +394,12 @@ void InputManager::ProcessInput()
 		//* Controller is connected
 		if (mIsConnected)
 		{
+			//* Controller Button Pressed
 			if (evn.type == SDL_CONTROLLERBUTTONDOWN)
 			{
+				//* Set Type
 				type = EventListener::Type::Press;
+				//* Find Button
 				if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_INVALID) {				mControllerButton = EventListener::Event::BUTTON_INVALID; }
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_A) {				mControllerButton = EventListener::Event::BUTTON_A; }
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_B) {				mControllerButton = EventListener::Event::BUTTON_B; }
@@ -373,35 +416,42 @@ void InputManager::ProcessInput()
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {		mControllerButton = EventListener::Event::BUTTON_DPAD_DOWN; }
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {		mControllerButton = EventListener::Event::BUTTON_DPAD_LEFT; }
 				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {		mControllerButton = EventListener::Event::BUTTON_DPAD_RIGHT; }
+				//* Set Pressed in map
 				controllerHeld[mControllerButton] = true;
+				//* Dispatch
 				Dispatch(type, mControllerButton);
-				countedButtonFrames = -4000;
+				//* Used to Delay Hold
+				countedButtonFrames = -controllerButtonDelay * 8;
 			}
 
 			else if (evn.type == SDL_CONTROLLERBUTTONUP)
 			{
+				//* Set Type
 				type = EventListener::Type::Release;
-				if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_INVALID) { mControllerButton = EventListener::Event::BUTTON_INVALID; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_A) { mControllerButton = EventListener::Event::BUTTON_A; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_B) { mControllerButton = EventListener::Event::BUTTON_B; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_X) { mControllerButton = EventListener::Event::BUTTON_X; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_Y) { mControllerButton = EventListener::Event::BUTTON_Y; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) { mControllerButton = EventListener::Event::BUTTON_BACK; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_GUIDE) { mControllerButton = EventListener::Event::BUTTON_GUIDE; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_START) { mControllerButton = EventListener::Event::BUTTON_START; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSTICK) { mControllerButton = EventListener::Event::BUTTON_LEFTSTICK; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK) { mControllerButton = EventListener::Event::BUTTON_RIGHTSTICK; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) { mControllerButton = EventListener::Event::BUTTON_LEFTSHOULDER; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) { mControllerButton = EventListener::Event::BUTTON_RIGHTSHOULDER; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) { mControllerButton = EventListener::Event::BUTTON_DPAD_UP; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) { mControllerButton = EventListener::Event::BUTTON_DPAD_DOWN; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) { mControllerButton = EventListener::Event::BUTTON_DPAD_LEFT; }
-				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) { mControllerButton = EventListener::Event::BUTTON_DPAD_RIGHT; }
+				//* Find Button
+				if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_INVALID) {				mControllerButton = EventListener::Event::BUTTON_INVALID; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_A) {				mControllerButton = EventListener::Event::BUTTON_A; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_B) {				mControllerButton = EventListener::Event::BUTTON_B; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_X) {				mControllerButton = EventListener::Event::BUTTON_X; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_Y) {				mControllerButton = EventListener::Event::BUTTON_Y; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_BACK) {			mControllerButton = EventListener::Event::BUTTON_BACK; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_GUIDE) {			mControllerButton = EventListener::Event::BUTTON_GUIDE; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_START) {			mControllerButton = EventListener::Event::BUTTON_START; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSTICK) {		mControllerButton = EventListener::Event::BUTTON_LEFTSTICK; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK) {		mControllerButton = EventListener::Event::BUTTON_RIGHTSTICK; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) {	mControllerButton = EventListener::Event::BUTTON_LEFTSHOULDER; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) {	mControllerButton = EventListener::Event::BUTTON_RIGHTSHOULDER; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_UP) {			mControllerButton = EventListener::Event::BUTTON_DPAD_UP; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) {		mControllerButton = EventListener::Event::BUTTON_DPAD_DOWN; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) {		mControllerButton = EventListener::Event::BUTTON_DPAD_LEFT; }
+				else if (evn.cbutton.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) {		mControllerButton = EventListener::Event::BUTTON_DPAD_RIGHT; }
+				//* Set Pressed in map
 				controllerHeld[mControllerButton] = false;
+				//* Dispatch
 				Dispatch(type, mControllerButton);
-				countedButtonFrames = -4000;
+				//* Used to Delay Hold
+				countedButtonFrames = -controllerButtonDelay * 8;
 			}
-
 
 			//* Joystick
 			//* Get If Axis Is Moving
@@ -420,16 +470,48 @@ void InputManager::ProcessInput()
 				//* Right Trigger Axis
 				if (evn.jaxis.axis == 5) { Stick_Right_T = evn.jaxis.value; }
 
-				// Trigger Press/ Relase
+				// Left Trigger Press/ Relaase
 				if (evn.jaxis.axis == 2) {
-					if (getLeftTrigger() > 30000) { Dispatch(EventListener::Type::Press, EventListener::Event::TRIGGER_LEFT); }
-					else if (getLeftTrigger() < -30000) { Dispatch(EventListener::Type::Release, EventListener::Event::TRIGGER_LEFT); }
+					if (getLeftTrigger() > 32000) { Dispatch(EventListener::Type::Press, EventListener::Event::TRIGGER_LEFT); }
+					if (getLeftTrigger() < -32000) { Dispatch(EventListener::Type::Release, EventListener::Event::TRIGGER_LEFT); }
 				}
 
+				// Right Trigger Press/ Relaase
 				if (evn.jaxis.axis == 5) {
-					if (getRightTrigger() > 30000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
-					else if (getRightTrigger() < -30000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+					if (getRightTrigger() > 32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+					if (getRightTrigger() < -32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
 				}
+			}
+		}
+
+		//* Mouse
+		if (evn.type == SDL_MOUSEBUTTONDOWN)
+		{
+			type = EventListener::Type::Press;
+			if (evn.button.button == SDL_BUTTON_LEFT) { Dispatch(type, EventListener::Event::MOUSE_LEFT); }
+			else if (evn.button.button == SDL_BUTTON_RIGHT) { Dispatch(type, EventListener::Event::MOUSE_RIGHT); }
+			else if (evn.button.button == SDL_BUTTON_MIDDLE) { Dispatch(type, EventListener::Event::MOUSE_MIDDLE); }
+		}
+		if (evn.type == SDL_MOUSEBUTTONUP)
+		{
+			type = EventListener::Type::Release;
+			if (evn.button.button == SDL_BUTTON_LEFT) { Dispatch(type, EventListener::Event::MOUSE_LEFT); }
+			else if (evn.button.button == SDL_BUTTON_RIGHT) { Dispatch(type, EventListener::Event::MOUSE_RIGHT); }
+			else if (evn.button.button == SDL_BUTTON_MIDDLE) { Dispatch(type, EventListener::Event::MOUSE_MIDDLE); }
+		}
+
+		if (evn.type == SDL_MOUSEWHEEL)
+		{
+			type = EventListener::Type::Press;
+			if (evn.wheel.y > 0) 
+			{ 
+				Dispatch(type, EventListener::Event::MOUSE_WHEEL_UP); 
+				SetPrevious(EventListener::Event::MOUSE_WHEEL_UP, false); 
+			}
+			else if (evn.wheel.y < 0) 
+			{ 
+				Dispatch(type, EventListener::Event::MOUSE_WHEEL_DOWN);
+				SetPrevious(EventListener::Event::MOUSE_WHEEL_DOWN, false);
 			}
 		}
 
@@ -437,39 +519,41 @@ void InputManager::ProcessInput()
 
 	}
 
-	//* Controller Hold Update
-	countedButtonFrames++;
-	if (countedButtonFrames > controllerButtonDelay)
+	//* Controller is connected
+	if (mIsConnected)
 	{
-		for (auto const &button : controllerHeld)
+		//* Controller Button Hold Update
+		countedButtonFrames++;
+		if (countedButtonFrames > controllerButtonDelay)
 		{
-			if (button.second) { Dispatch(EventListener::Type::Hold, button.first); }
-			else { controllerHeld[button.first] = false; }
+			//* For Each Button in the Map
+			for (auto const &button : controllerHeld)
+			{
+				if (button.second) { Dispatch(EventListener::Type::Hold, button.first); }
+				else { controllerHeld[button.first] = false; }
+			}
+			countedButtonFrames = 0;
 		}
-		countedButtonFrames = 0;
+
+		//* Controller Trigger Hold Update
+		countedTriggerFrames++;
+		if (countedTriggerFrames > controllerButtonDelay)
+		{
+			if (getLeftTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_LEFT); }
+			else if (getLeftTrigger() > -30000 && getLeftTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_LEFT); }
+
+			if (getRightTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+			else if (getRightTrigger() > -30000 && getRightTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_RIGHT); }
+
+			countedTriggerFrames = 0;
+		}
 	}
-
-	countedTriggerFrames++;
-	if (countedTriggerFrames > controllerButtonDelay)
-	{
-		if (getLeftTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_LEFT); }
-		else if (getLeftTrigger() > -30000 && getLeftTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_LEFT); }
-
-		if (getRightTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
-		else if (getRightTrigger() > -30000 && getRightTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_RIGHT); }
-
-		countedTriggerFrames = 0;
-	}
-
-	//std::cout << getLeftStickVector().x << "\t" << getLeftStickVector().y << std::endl;
-	//std::cout << getLeftStickVectorNormal().x << "\t" << getLeftStickVectorNormal().y << std::endl;
-	//std::cout << getLeftStickAngle() << std::endl;
-	//std::cout << getLeftTrigger() << "\t" << getRightTrigger() << std::endl;
 }
 
 //* Add Contoller if Detected
 void InputManager::AddController(int id)
 {
+	//* Assign Current Controller
 	if (SDL_IsGameController(id)) 
 	{
 		mGameController = SDL_GameControllerOpen(id);
@@ -478,6 +562,7 @@ void InputManager::AddController(int id)
 
 		if (mGameController) 
 		{
+			//* Assign Joysticks
 			mJoyStick = SDL_JoystickOpen(id);
 			int instanceID = SDL_JoystickInstanceID(mJoyStick);
 		}
@@ -571,4 +656,169 @@ float InputManager::getRightStickAngle()
 float InputManager::getRightTrigger()
 {
 	return Stick_Right_T;
+}
+
+//* Logger
+void InputManager::logEvent(std::string str)
+{
+	logFileValues.push_back(str);
+}
+
+void InputManager::saveFile()
+{
+	logFileName = "Input Log = "
+		+ getTimeStamp(true)
+		+ ".csv";
+
+	std::string log;
+
+	for (int i = 0; i < logFileValues.size(); i++)
+	{
+		log += logFileValues[i] + "\n";
+	}
+
+	std::ofstream output_file(logFileName);
+	output_file << log;
+	logFileValues.clear();
+	log = "";
+}
+
+std::string InputManager::getTimeStamp(bool save)
+{
+	time_t t = time(0);
+	struct tm now;
+
+	localtime_s(&now, &t);
+
+	std::string timeStamp;
+
+	if (save == true)
+	{
+		 timeStamp = ""
+			+ std::to_string(now.tm_mday) + "-"
+			+ std::to_string(now.tm_mon + 1) + "-"
+			+ std::to_string(now.tm_year + 1900) + "_"
+			+ std::to_string(now.tm_hour) + "-"
+			+ std::to_string(now.tm_min) + "-"
+			+ std::to_string(now.tm_sec);
+	}
+	else
+	{
+		timeStamp = ""
+			+ std::to_string(now.tm_mday) + "/"
+			+ std::to_string(now.tm_mon + 1) + "/"
+			+ std::to_string(now.tm_year + 1900) + " - "
+			+ std::to_string(now.tm_hour) + ":"
+			+ std::to_string(now.tm_min) + ":"
+			+ std::to_string(now.tm_sec);
+	}
+
+	return timeStamp;
+}
+
+void InputManager::createMap()
+{
+	logFileValues.push_back("Key, Type, Duration, Time Stamp");
+
+	keyNames[EventListener::Event::RETURN] = "Return";
+	keyNames[EventListener::Event::ESCAPE] = "Escape";
+	keyNames[EventListener::Event::BACKSPACE] = "BackSpace";
+	keyNames[EventListener::Event::TAB] = "Tab";
+	keyNames[EventListener::Event::SPACE] = "Space";
+	keyNames[EventListener::Event::EXCLAIM] = "!";
+	keyNames[EventListener::Event::QUOTEDBL] = "Half Quote";
+	keyNames[EventListener::Event::HASH] = "#";
+	keyNames[EventListener::Event::PERCENT] = "%";
+	keyNames[EventListener::Event::DOLLAR] = "$";
+	keyNames[EventListener::Event::AMPERSAND] = "&";
+	keyNames[EventListener::Event::QUOTE] = "Quote";
+	keyNames[EventListener::Event::LEFTPAREN] = "(";
+	keyNames[EventListener::Event::RIGHTPAREN] = ")";
+	keyNames[EventListener::Event::ASTERISK] = "*";
+	keyNames[EventListener::Event::PLUS] = "+";
+	keyNames[EventListener::Event::COMMA] = "Comma";
+	keyNames[EventListener::Event::MINUS] = "-";
+	keyNames[EventListener::Event::PERIOD] = ".";
+	keyNames[EventListener::Event::SLASH] = "/";
+	keyNames[EventListener::Event::NUM_0] = "0";
+	keyNames[EventListener::Event::NUM_1] = "1";
+	keyNames[EventListener::Event::NUM_2] = "2";
+	keyNames[EventListener::Event::NUM_3] = "3";
+	keyNames[EventListener::Event::NUM_4] = "4";
+	keyNames[EventListener::Event::NUM_5] = "5";
+	keyNames[EventListener::Event::NUM_6] = "6";
+	keyNames[EventListener::Event::NUM_7] = "7";
+	keyNames[EventListener::Event::NUM_8] = "8";
+	keyNames[EventListener::Event::NUM_9] = "9";
+	keyNames[EventListener::Event::COLON] = "Colon";
+	keyNames[EventListener::Event::SEMICOLON] = "Semi Colon";
+	keyNames[EventListener::Event::LESS] = "<";
+	keyNames[EventListener::Event::EQUALS] = "=";
+	keyNames[EventListener::Event::GREATER] = ">";
+	keyNames[EventListener::Event::QUESTION] = "?";
+	keyNames[EventListener::Event::AT] = "@";
+	// Skip uppercase letters
+	keyNames[EventListener::Event::LEFTBRACKET] = "[";
+	keyNames[EventListener::Event::BACKSLASH] = "\\";
+	keyNames[EventListener::Event::RIGHTBRACKET] = "]";
+	keyNames[EventListener::Event::CARET] = "^";
+	keyNames[EventListener::Event::UNDERSCORE] = "_";
+	keyNames[EventListener::Event::BACKQUOTE] = "`";
+	keyNames[EventListener::Event::a] = "a";
+	keyNames[EventListener::Event::b] = "b";
+	keyNames[EventListener::Event::c] = "c";
+	keyNames[EventListener::Event::d] = "d";
+	keyNames[EventListener::Event::e] = "e";
+	keyNames[EventListener::Event::f] = "f";
+	keyNames[EventListener::Event::g] = "g";
+	keyNames[EventListener::Event::h] = "h";
+	keyNames[EventListener::Event::i] = "i";
+	keyNames[EventListener::Event::j] = "j";
+	keyNames[EventListener::Event::k] = "k";
+	keyNames[EventListener::Event::l] = "l";
+	keyNames[EventListener::Event::m] = "m";
+	keyNames[EventListener::Event::n] = "n";
+	keyNames[EventListener::Event::o] = "o";
+	keyNames[EventListener::Event::p] = "p";
+	keyNames[EventListener::Event::q] = "q";
+	keyNames[EventListener::Event::r] = "r";
+	keyNames[EventListener::Event::s] = "s";
+	keyNames[EventListener::Event::t] = "t";
+	keyNames[EventListener::Event::u] = "u";
+	keyNames[EventListener::Event::v] = "v";
+	keyNames[EventListener::Event::w] = "w";
+	keyNames[EventListener::Event::x] = "x";
+	keyNames[EventListener::Event::y] = "y";
+	keyNames[EventListener::Event::z] = "z";
+	// Controller
+	keyNames[EventListener::Event::BUTTON_INVALID] = "Invalid";
+	keyNames[EventListener::Event::BUTTON_A] = "Controller A";
+	keyNames[EventListener::Event::BUTTON_B] = "Controller B";
+	keyNames[EventListener::Event::BUTTON_X] = "Controller X";
+	keyNames[EventListener::Event::BUTTON_Y] = "Controller Y";
+	keyNames[EventListener::Event::BUTTON_BACK] = "Controller Back";
+	keyNames[EventListener::Event::BUTTON_GUIDE] = "Controller Guide";
+	keyNames[EventListener::Event::BUTTON_START] = "Controller Start";
+	keyNames[EventListener::Event::BUTTON_LEFTSTICK] = "Controller Left Stick";
+	keyNames[EventListener::Event::BUTTON_RIGHTSTICK] = "Controller Right Stick";
+	keyNames[EventListener::Event::BUTTON_LEFTSHOULDER] = "Controller Left Shoulder";
+	keyNames[EventListener::Event::BUTTON_RIGHTSHOULDER] = "Controller Right Shoulder";
+	keyNames[EventListener::Event::BUTTON_DPAD_UP] = "D Pad Up";
+	keyNames[EventListener::Event::BUTTON_DPAD_DOWN] = "D Pad Down";
+	keyNames[EventListener::Event::BUTTON_DPAD_LEFT] = "D Pad Left";
+	keyNames[EventListener::Event::BUTTON_DPAD_RIGHT] = "D Pad Right";
+	keyNames[EventListener::Event::TRIGGER_SOFT_LEFT] = "Trigger Soft Left";
+	keyNames[EventListener::Event::TRIGGER_LEFT] = "Trigger Hard Left";
+	keyNames[EventListener::Event::TRIGGER_SOFT_RIGHT] = "Trigger Soft Right";
+	keyNames[EventListener::Event::TRIGGER_RIGHT] = "Trigger Hard Right";
+	// Mouse
+	keyNames[EventListener::Event::MOUSE_LEFT] = "Mouse Left";
+	keyNames[EventListener::Event::MOUSE_RIGHT] = "Mouse Right";
+	keyNames[EventListener::Event::MOUSE_MIDDLE] = "Mouse Middle";
+	keyNames[EventListener::Event::MOUSE_WHEEL_UP] = "Mouse Wheel Up";
+	keyNames[EventListener::Event::MOUSE_WHEEL_DOWN] = "Mouse Wheel Down";
+	// Types
+	keyTypes[EventListener::Type::Press] = "Press";
+	keyTypes[EventListener::Type::Release] = "Release";
+	keyTypes[EventListener::Type::Hold] = "Hold";
 }
