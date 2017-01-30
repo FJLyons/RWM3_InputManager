@@ -15,7 +15,7 @@
 /** The game object which manages the game loop*/
 class Game : public EventListener
 {
-	InputManager* inputManager = InputManager::getInstance();
+	InputManager* inputManager = InputManager::GetInstance();
 	Renderer renderer;
 
 	Player* player;

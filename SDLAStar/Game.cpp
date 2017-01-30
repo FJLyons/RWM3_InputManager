@@ -48,11 +48,15 @@ bool Game::init(Renderer rend) {
 	inputManager->AddKey(Event::w, w, this);
 	inputManager->AddKey(Event::a, a, this);
 	inputManager->AddKey(Event::s, s, this);
+	inputManager->AddKey(Event::s, d, this);
 	inputManager->AddKey(Event::d, d, this);
 
+	inputManager->ResetKey(Event::s);
+	inputManager->AddKey(Event::s, d, this);
 
-	Command* m = new SpaceCommand(std::bind(&Player::movePlayerUp, player), Press);
-	inputManager->AddKey(Event::MOUSE_WHEEL_UP, m, this);
+
+	Command* m = new SpaceCommand(std::bind(&Player::movePlayerUp, player), Hold);
+	inputManager->AddKey(Event::MOUSE_LEFT, m, this);
 
 	Command* n = new SpaceCommand(std::bind(&Player::movePlayerDown, player), Press);
 	inputManager->AddKey(Event::MOUSE_WHEEL_DOWN, n, this);
@@ -118,7 +122,6 @@ void Game::onEvent(EventListener::Event evt)
 {
 	switch (evt)
 	{
-	case ESCAPE: inputManager->saveFile();
 	}
 }
 

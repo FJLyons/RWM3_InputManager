@@ -7,7 +7,8 @@ InputManager* InputManager::inputManagerInstance = nullptr;
 //* Default Constructor
 InputManager::InputManager()
 {
-	createMap();
+	//* Create map of Keys and Events for Logger
+	createKeyMap();
 }
 
 //* Default Deconstructor
@@ -16,7 +17,7 @@ InputManager::~InputManager()
 }
 
 //* Used to get the Class Instance
-InputManager* InputManager::getInstance()
+InputManager* InputManager::GetInstance()
 {
 	if (inputManagerInstance == nullptr)
 	{
@@ -104,7 +105,7 @@ void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 				keyNames[evt] + ","
 				+ keyTypes[type] + ","
 				+ "" + ","
-				+ getTimeStamp(false);
+				+ GetTimeStamp(false);
 			logEvent(newLine);
 			previousEvent = evt;
 		}
@@ -117,7 +118,7 @@ void InputManager::Execute(EventListener::Type type, EventListener::Event evt)
 				keyNames[evt] + ","
 				+ keyTypes[type] + ","
 				+ std::to_string(holdDuration / 20) + ","
-				+ getTimeStamp(false);
+				+ GetTimeStamp(false);
 			logEvent(newLine);
 			previousEvent = evt;
 		}
@@ -160,6 +161,13 @@ void InputManager::AddKey(EventListener::Event evt, Command* command, EventListe
 	AddListener(evt, listener);
 	//* Create a Command for this Event
 	AddCommand(evt, toBind);
+}
+
+//* Used to create a key event
+void InputManager::ResetKey(EventListener::Event evt)
+{
+	commands[evt]->clear();
+	listeners[evt]->clear();
 }
 
 //* Combine a Command* and an EventListener to work together
@@ -458,28 +466,28 @@ void InputManager::ProcessInput()
 			if (evn.type == SDL_JOYAXISMOTION)
 			{
 				//* Left Stick X Axis
-				if (evn.jaxis.axis == 0) { Stick_Left_X = evn.jaxis.value; }
-				//* Left Stick Y Axis
-				if (evn.jaxis.axis == 1) { Stick_Left_Y = evn.jaxis.value; }
-				//* Left Trigger Axis
-				if (evn.jaxis.axis == 2) { Stick_Left_T = evn.jaxis.value; }
-				//* Right Stick X Axis
-				if (evn.jaxis.axis == 3){ Stick_Right_X = evn.jaxis.value; }
-				//* Right Stick Y Axis
-				if (evn.jaxis.axis == 4) { Stick_Right_Y = evn.jaxis.value; }
-				//* Right Trigger Axis
-				if (evn.jaxis.axis == 5) { Stick_Right_T = evn.jaxis.value; }
+				if (evn.jaxis.axis == 0) { stick_Left_X = evn.jaxis.value; }
+				//* Left Stick Y Axis	   
+				if (evn.jaxis.axis == 1) { stick_Left_Y = evn.jaxis.value; }
+				//* Left Trigger Axis	   
+				if (evn.jaxis.axis == 2) { stick_Left_T = evn.jaxis.value; }
+				//* Right Stick X Axis	   
+				if (evn.jaxis.axis == 3) { stick_Right_X = evn.jaxis.value; }
+				//* Right Stick Y Axis	   
+				if (evn.jaxis.axis == 4) { stick_Right_Y = evn.jaxis.value; }
+				//* Right Trigger Axis	   
+				if (evn.jaxis.axis == 5) { stick_Right_T = evn.jaxis.value; }
 
 				// Left Trigger Press/ Relaase
 				if (evn.jaxis.axis == 2) {
-					if (getLeftTrigger() > 32000) { Dispatch(EventListener::Type::Press, EventListener::Event::TRIGGER_LEFT); }
-					if (getLeftTrigger() < -32000) { Dispatch(EventListener::Type::Release, EventListener::Event::TRIGGER_LEFT); }
+					if (GetLeftTrigger() > 32000) { Dispatch(EventListener::Type::Press, EventListener::Event::TRIGGER_LEFT); }
+					if (GetLeftTrigger() < -32000) { Dispatch(EventListener::Type::Release, EventListener::Event::TRIGGER_LEFT); }
 				}
 
 				// Right Trigger Press/ Relaase
 				if (evn.jaxis.axis == 5) {
-					if (getRightTrigger() > 32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
-					if (getRightTrigger() < -32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+					if (GetRightTrigger() > 32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+					if (GetRightTrigger() < -32000) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
 				}
 			}
 		}
@@ -491,6 +499,7 @@ void InputManager::ProcessInput()
 			if (evn.button.button == SDL_BUTTON_LEFT) { Dispatch(type, EventListener::Event::MOUSE_LEFT); }
 			else if (evn.button.button == SDL_BUTTON_RIGHT) { Dispatch(type, EventListener::Event::MOUSE_RIGHT); }
 			else if (evn.button.button == SDL_BUTTON_MIDDLE) { Dispatch(type, EventListener::Event::MOUSE_MIDDLE); }
+			countedMouseFrames = 0;
 		}
 		if (evn.type == SDL_MOUSEBUTTONUP)
 		{
@@ -498,6 +507,7 @@ void InputManager::ProcessInput()
 			if (evn.button.button == SDL_BUTTON_LEFT) { Dispatch(type, EventListener::Event::MOUSE_LEFT); }
 			else if (evn.button.button == SDL_BUTTON_RIGHT) { Dispatch(type, EventListener::Event::MOUSE_RIGHT); }
 			else if (evn.button.button == SDL_BUTTON_MIDDLE) { Dispatch(type, EventListener::Event::MOUSE_MIDDLE); }
+			countedMouseFrames = 0;
 		}
 
 		if (evn.type == SDL_MOUSEWHEEL)
@@ -539,17 +549,18 @@ void InputManager::ProcessInput()
 		countedTriggerFrames++;
 		if (countedTriggerFrames > controllerButtonDelay)
 		{
-			if (getLeftTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_LEFT); }
-			else if (getLeftTrigger() > -30000 && getLeftTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_LEFT); }
+			if (GetLeftTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_LEFT); }
+			else if (GetLeftTrigger() > -30000 && GetLeftTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_LEFT); }
 
-			if (getRightTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
-			else if (getRightTrigger() > -30000 && getRightTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_RIGHT); }
+			if (GetRightTrigger() > 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_RIGHT); }
+			else if (GetRightTrigger() > -30000 && GetRightTrigger() < 0) { Dispatch(EventListener::Type::Hold, EventListener::Event::TRIGGER_SOFT_RIGHT); }
 
 			countedTriggerFrames = 0;
 		}
 	}
 }
 
+//// Controller  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //* Add Contoller if Detected
 void InputManager::AddController(int id)
 {
@@ -577,17 +588,28 @@ void InputManager::RemoveController(int id)
 }
 
 //* Set Delay of Controller Update
-void InputManager::SetControllerDelay(int delay)
+void InputManager::SetControllerButtonDelay(int delay)
 {
 	controllerButtonDelay = delay;
 }
 
-//* Return X, Y for Left Stick Vector
-Vector2f InputManager::getLeftStickVector()
+void InputManager::SetControllerTriggerDelay(int delay)
 {
-	if (Vector2f(Stick_Left_X, Stick_Left_Y).magnitude() > Stick_Dead_Zone)
+	controllerTriggerDelay = delay;
+}
+
+//* Set the size of the Stick Dead Zone
+void InputManager::SetStickDeadZone(int deadZone)
+{
+	stick_Dead_Zone = deadZone;
+}
+
+//* Return X, Y for Left Stick Vector
+Vector2f InputManager::GetLeftStickVector()
+{
+	if (Vector2f(stick_Left_X, stick_Left_Y).magnitude() > stick_Dead_Zone)
 	{
-		return Vector2f(Stick_Left_X, Stick_Left_Y);
+		return Vector2f(stick_Left_X, stick_Left_Y);
 	}
 	else
 	{
@@ -596,11 +618,11 @@ Vector2f InputManager::getLeftStickVector()
 }
 
 //* Return X, Y for Left Stick Vector Normal
-Vector2f InputManager::getLeftStickVectorNormal()
+Vector2f InputManager::GetLeftStickVectorNormal()
 {
-	if (Vector2f(Stick_Left_X, Stick_Left_Y).magnitude() > Stick_Dead_Zone)
+	if (Vector2f(stick_Left_X, stick_Left_Y).magnitude() > stick_Dead_Zone)
 	{
-		return Vector2f(Stick_Left_X, Stick_Left_Y).normalise();
+		return Vector2f(stick_Left_X, stick_Left_Y).normalise();
 	}
 	else
 	{
@@ -609,23 +631,23 @@ Vector2f InputManager::getLeftStickVectorNormal()
 }
 
 //* Return X, Y for Left Stick Angle
-float InputManager::getLeftStickAngle()
+float InputManager::GetLeftStickAngle()
 {
-	return (180 - (180 * (atan2(Stick_Left_X, Stick_Left_Y)) / M_PI));
+	return (180 - (180 * (atan2(stick_Left_X, stick_Left_Y)) / M_PI));
 }
 
 //* Return Left Trigger Value
-float InputManager::getLeftTrigger()
+float InputManager::GetLeftTrigger()
 {
-	return Stick_Left_T;
+	return stick_Left_T;
 }
 
 //* Return X, Y for Right Stick Vector
-Vector2f InputManager::getRightStickVector()
+Vector2f InputManager::GetRightStickVector()
 {
-	if (Vector2f(Stick_Right_X, Stick_Right_Y).magnitude() > Stick_Dead_Zone)
+	if (Vector2f(stick_Right_X, stick_Right_Y).magnitude() > stick_Dead_Zone)
 	{
-		return Vector2f(Stick_Right_X, Stick_Right_Y);
+		return Vector2f(stick_Right_X, stick_Right_Y);
 	}
 	else
 	{
@@ -634,11 +656,11 @@ Vector2f InputManager::getRightStickVector()
 }
 
 //* Return X, Y for Right Stick Vector Normal
-Vector2f InputManager::getRightStickVectorNormal()
+Vector2f InputManager::GetRightStickVectorNormal()
 {
-	if (Vector2f(Stick_Right_X, Stick_Right_Y).magnitude() > Stick_Dead_Zone)
+	if (Vector2f(stick_Right_X, stick_Right_Y).magnitude() > stick_Dead_Zone)
 	{
-		return Vector2f(Stick_Right_X, Stick_Right_Y);
+		return Vector2f(stick_Right_X, stick_Right_Y);
 	}
 	else
 	{
@@ -647,27 +669,29 @@ Vector2f InputManager::getRightStickVectorNormal()
 }
 
 //* Return X, Y for Right Stick Angle
-float InputManager::getRightStickAngle()
+float InputManager::GetRightStickAngle()
 {
-	return (180 - (180 * (atan2(Stick_Right_X, Stick_Right_Y)) / M_PI));
+	return (180 - (180 * (atan2(stick_Right_X, stick_Right_Y)) / M_PI));
 }
 
 //* Return Right Trigger Value
-float InputManager::getRightTrigger()
+float InputManager::GetRightTrigger()
 {
-	return Stick_Right_T;
+	return stick_Right_T;
 }
 
-//* Logger
+//* Logger //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//* Add Event to output Log
 void InputManager::logEvent(std::string str)
 {
 	logFileValues.push_back(str);
 }
 
+//* Save the Log File
 void InputManager::saveFile()
 {
 	logFileName = "Input Log = "
-		+ getTimeStamp(true)
+		+ GetTimeStamp(true)
 		+ ".csv";
 
 	std::string log;
@@ -683,7 +707,8 @@ void InputManager::saveFile()
 	log = "";
 }
 
-std::string InputManager::getTimeStamp(bool save)
+//* Return the Current System Time
+std::string InputManager::GetTimeStamp(bool save)
 {
 	time_t t = time(0);
 	struct tm now;
@@ -716,7 +741,8 @@ std::string InputManager::getTimeStamp(bool save)
 	return timeStamp;
 }
 
-void InputManager::createMap()
+//* Fill the map for Key Logger
+void InputManager::createKeyMap()
 {
 	logFileValues.push_back("Key, Type, Duration, Time Stamp");
 
@@ -757,6 +783,7 @@ void InputManager::createMap()
 	keyNames[EventListener::Event::GREATER] = ">";
 	keyNames[EventListener::Event::QUESTION] = "?";
 	keyNames[EventListener::Event::AT] = "@";
+
 	// Skip uppercase letters
 	keyNames[EventListener::Event::LEFTBRACKET] = "[";
 	keyNames[EventListener::Event::BACKSLASH] = "\\";
@@ -790,6 +817,7 @@ void InputManager::createMap()
 	keyNames[EventListener::Event::x] = "x";
 	keyNames[EventListener::Event::y] = "y";
 	keyNames[EventListener::Event::z] = "z";
+
 	// Controller
 	keyNames[EventListener::Event::BUTTON_INVALID] = "Invalid";
 	keyNames[EventListener::Event::BUTTON_A] = "Controller A";
@@ -811,12 +839,14 @@ void InputManager::createMap()
 	keyNames[EventListener::Event::TRIGGER_LEFT] = "Trigger Hard Left";
 	keyNames[EventListener::Event::TRIGGER_SOFT_RIGHT] = "Trigger Soft Right";
 	keyNames[EventListener::Event::TRIGGER_RIGHT] = "Trigger Hard Right";
+
 	// Mouse
 	keyNames[EventListener::Event::MOUSE_LEFT] = "Mouse Left";
 	keyNames[EventListener::Event::MOUSE_RIGHT] = "Mouse Right";
 	keyNames[EventListener::Event::MOUSE_MIDDLE] = "Mouse Middle";
 	keyNames[EventListener::Event::MOUSE_WHEEL_UP] = "Mouse Wheel Up";
 	keyNames[EventListener::Event::MOUSE_WHEEL_DOWN] = "Mouse Wheel Down";
+
 	// Types
 	keyTypes[EventListener::Type::Press] = "Press";
 	keyTypes[EventListener::Type::Release] = "Release";

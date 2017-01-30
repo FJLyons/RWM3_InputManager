@@ -182,6 +182,14 @@ public:
 	virtual void executePress() {};
 	virtual void executeRelease() {};
 	virtual void executeHold() {};
+
+	void clearKeys()
+	{
+		for (std::vector<std::function<void()>>::iterator it = m_functions.begin(); it != m_functions.end(); ++it)
+		{
+			delete &it;
+		}
+	}
 };
 
 //* Singleton class for input management
@@ -210,7 +218,7 @@ private:
 	//// Instance Variables
 public:
 	//* Used to get the Class Instance
-	static InputManager* getInstance();
+	static InputManager* GetInstance();
 private:
 	//* Used to return the same instance of the Class
 	static InputManager* inputManagerInstance;
@@ -219,12 +227,15 @@ public:
 	//* Required to update the input
 	void ProcessInput();
 
-	//* Used to create a key event
-	void AddKey(EventListener::Event, Command*, EventListener*);
 	//* Create an EventListener object
 	void AddListener(EventListener::Event, EventListener*);
 
-	//* Input Functions
+	//* Used to create a key event
+	void AddKey(EventListener::Event, Command*, EventListener*);
+	//* Reset a Key and remove its Commands
+	void ResetKey(EventListener::Event);
+
+	//// Input Functions
 private:
 	//* Find a specific Event listener in the listeners dictionary, and call its onEvent() function
 	void Dispatch(EventListener::Type, EventListener::Event);
@@ -242,11 +253,12 @@ private:
 	//* Combine a Command* and an EventListener to work together
 	Command*& bindCommand(EventListener::Event);
 
-	//*Controller Variables
+	//// Controller Variables
 private:
 	//* Controller Timers
 	int countedButtonFrames = 0;
 	int countedTriggerFrames = 0;
+
 	int controllerButtonDelay = 500;
 	int controllerTriggerDelay = 500;
 
@@ -263,50 +275,80 @@ private:
 	void AddController(int id);
 	//* Disconnect Controller
 	void RemoveController(int id);
+
 public:
 	//* Set Delay of Controller Update
-	void SetControllerDelay(int delayInMilliseconds);
+	void SetControllerButtonDelay(int delayInMilliseconds);
+	void SetControllerTriggerDelay(int delayInMilliseconds);
 
+	//// Controller Sticks
+private:
 	//* Joy Stick Axis
-	int Stick_Dead_Zone = 4000;
+	int stick_Dead_Zone = 4000;
 
 	//* Left Stick Variables
-	float Stick_Left_X = 0;
-	float Stick_Left_Y = 0;
-	float Stick_Left_T = 0;
-	//* Left Stick Functions
-	Vector2f getLeftStickVector();
-	Vector2f getLeftStickVectorNormal();
-	float getLeftStickAngle();
-	float getLeftTrigger();
+	float stick_Left_X = 0;
+	float stick_Left_Y = 0;
+	float stick_Left_T = 0;
 
 	//* Right Stick Variables
-	float Stick_Right_X = 0;
-	float Stick_Right_Y = 0;
-	float Stick_Right_T = 0;
-	//* Left Stick Functions
-	Vector2f getRightStickVector();
-	Vector2f getRightStickVectorNormal();
-	float getRightStickAngle();
-	float getRightTrigger();
+	float stick_Right_X = 0;
+	float stick_Right_Y = 0;
+	float stick_Right_T = 0;
 
-	// Logger
+public:
+	//* Set the size of the Stick Dead Zone
+	void SetStickDeadZone(int deadZone);
+
+	//* Left Stick Functions
+	Vector2f GetLeftStickVector();
+	Vector2f GetLeftStickVectorNormal();
+	float GetLeftStickAngle();
+	float GetLeftTrigger();
+
+	//* Left Stick Functions
+	Vector2f GetRightStickVector();
+	Vector2f GetRightStickVectorNormal();
+	float GetRightStickAngle();
+	float GetRightTrigger();
+
+	//// Mouse
 private:
+	//* Controller Timers
+	int countedMouseFrames = 0;
+	int mouseDelay = 500;
+
+public:
+	//* Set Delay of Controller Update
+	void SetMouseDelay(int delayInMilliseconds);
+
+
+	//// Logger
+private:
+	//* Log File Name
 	std::string logFileName;
+	//* Log File Values
 	std::vector<std::string> logFileValues;
 
+	//* Add Event to Output Log
 	void logEvent(std::string str);
-	void createMap();
-	std::string getTimeStamp(bool save);
+	//* Fill the Map for Key Logger
+	void createKeyMap();
 
+	//* Maps of Strings from Event Names
 	std::map<EventListener::Event, std::string> keyNames;
 	std::map<EventListener::Type, std::string> keyTypes;
 
+	//* Track Previous Event for Hold
 	EventListener::Event previousEvent;
+	//* Count Hold Time
 	float holdDuration = 0;
 
 public:
+	//* Save the Log File
 	void saveFile();
+	//* Return the Current System Time
+	std::string GetTimeStamp(bool save);
 
 	//// Commands
 public:
@@ -381,6 +423,7 @@ public:
 	Command* Key_x;
 	Command* Key_y;
 	Command* Key_z;
+
 	// Controller
 	Command* Button_INVALID;
 	Command* Button_A;
@@ -402,6 +445,7 @@ public:
 	Command* Trigger_LEFT;
 	Command* Trigger_SOFT_RIGHT;
 	Command* Trigger_RIGHT;
+
 	// Mouse
 	Command* Mouse_Left;
 	Command* Mouse_Right;
