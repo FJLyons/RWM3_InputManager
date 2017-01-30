@@ -1,5 +1,14 @@
 #pragma once
+
+#ifdef FLINPUTMANAGER_EXPORTS  
+#define MATHLIBRARY_API __declspec(dllexport)   
+#else  
+#define FLINPUTMANAGER_API __declspec(dllimport)   
+#endif 
+
 #include "SDL.h"
+
+#define SDL_main main
 
 #include <iostream>
 #include <fstream>
@@ -12,6 +21,7 @@
 #include<thread>
 #include<functional>
 
+
 //* Vector2f Class for JoyStick values
 class Vector2f
 {
@@ -22,7 +32,7 @@ public:
 	Vector2f operator*(float m) { x *= m; y *= m; return *this; }
 	Vector2f operator+(const Vector2f v) { x += v.x; y += v.y; return *this; }
 	float magnitude() { return sqrt(x * x + y * y); }
-	float dotProduct(const Vector2f v2){ return (x * v2.x) + (y * v2.y); }
+	float dotProduct(const Vector2f v2) { return (x * v2.x) + (y * v2.y); }
 
 	Vector2f normalise() {
 		if (magnitude() != 0) { return Vector2f((x / magnitude()), (y / magnitude())); }
@@ -173,7 +183,7 @@ public:
 	std::function<void()> m_function;
 	//* Vector of functions for multiple functions per Key
 	std::vector<std::function<void()>> m_functions;
-	
+
 	//* Type of Event used to differentiate commands
 	EventListener::Type m_type;
 
@@ -205,17 +215,17 @@ public:
 private:
 	//* Dictionary holding a list of litener objects for each event
 	std::map<EventListener::Event, std::vector<EventListener*>*> listeners; //* Pointer to vector of EventListeners
-	
-	//* Dictionary holding a bool for each event
+
+																			//* Dictionary holding a bool for each event
 	std::map<EventListener::Event, bool> beingHeld; //* Bool used to detect if the desired Event was previously being held
 
-	//* Dictionary holding a list of command objects for each event
+													//* Dictionary holding a list of command objects for each event
 	std::map<EventListener::Event, std::vector<Command*>*> commands; //* Pointer to vector of Commands
 
-	 //* Dictionary holding a bool for each event
+																	 //* Dictionary holding a bool for each event
 	std::map<EventListener::Event, bool> controllerHeld; //* Bool used to detect if the desired Event was previously being held
 
-	//// Instance Variables
+														 //// Instance Variables
 public:
 	//* Used to get the Class Instance
 	static InputManager* GetInstance();
@@ -258,12 +268,11 @@ private:
 	//* Controller Timers
 	int countedButtonFrames = 0;
 	int countedTriggerFrames = 0;
-
 	int controllerButtonDelay = 500;
 	int controllerTriggerDelay = 500;
 
 	//* Controller
-	SDL_GameController* mGameController = SDL_GameControllerOpen(0); 
+	SDL_GameController* mGameController = SDL_GameControllerOpen(0);
 	SDL_Joystick* mJoyStick = SDL_JoystickOpen(0);
 
 	//* Used to get current Controller event for the map and see if it's being held
@@ -278,8 +287,7 @@ private:
 
 public:
 	//* Set Delay of Controller Update
-	void SetControllerButtonDelay(int delayInMilliseconds);
-	void SetControllerTriggerDelay(int delayInMilliseconds);
+	void SetControllerDelay(int delayInMilliseconds);
 
 	//// Controller Sticks
 private:
@@ -311,16 +319,6 @@ public:
 	Vector2f GetRightStickVectorNormal();
 	float GetRightStickAngle();
 	float GetRightTrigger();
-
-	//// Mouse
-private:
-	//* Controller Timers
-	int countedMouseFrames = 0;
-	int mouseDelay = 500;
-
-public:
-	//* Set Delay of Controller Update
-	void SetMouseDelay(int delayInMilliseconds);
 
 
 	//// Logger
@@ -456,74 +454,3 @@ public:
 
 	//\\ Add new Command* here for custom inputs
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//* Custom Command Override Examples
-//* Over ride command object with custom command
-class OverRideCommand : public Command
-{
-public:
-	//* Default Constructor sets m_function to function passed in
-	OverRideCommand(std::function<void()> function) : Command(function) {}
-
-	//* Run Function sent in, and any other custom operations
-	virtual void execute()
-	{
-		//* Run Function
-		m_function();
-	}
-};
-
-//* Override command object with custom command and type
-class OverRideCommandType : public Command
-{
-public:
-	//* Default Constructor sets m_function to function passed in, and m_type to type passed in
-	OverRideCommandType(std::function<void()> function, EventListener::Type type) : Command(function, type) {}
-
-	//* Run Function sent in if key is pressed, and any other custom operations
-	virtual void executePress()
-	{
-		//* Loop to find every Key with a Press type
-		for (int i = 0; m_type == EventListener::Type::Press && i < m_functions.size(); i++)
-		{
-			//* Run Function if key is pressed
-			m_functions[i]();
-		}
-	}
-
-	//* Run Function sent in if key is released, and any other custom operations
-	virtual void executeRelease()
-	{
-		//* Loop to find every Key with a Release type
-		for (int i = 0; m_type == EventListener::Type::Release && i < m_functions.size(); i++)
-		{
-			//* Run Function if key is released
-			m_functions[i]();
-		}
-	}
-
-	//* Run Function sent in if key is held, and any other custom operations
-	virtual void executeHold()
-	{
-		//* Loop to find every Key with a Hold type
-		for (int i = 0; m_type == EventListener::Type::Hold && i < m_functions.size(); i++)
-		{
-			//* Run Function if key is held
-			m_functions[i]();
-		}
-	}
-};
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
