@@ -292,7 +292,8 @@ private:
 
 public:
 	//* Set Delay of Controller Update
-	void SetControllerDelay(int delayInMilliseconds);
+	void SetControllerButtonDelay(int delayInMilliseconds);
+	void SetControllerTriggerDelay(int delayInMilliseconds);
 
 	//// Controller Sticks
 private:

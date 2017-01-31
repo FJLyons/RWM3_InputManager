@@ -43,24 +43,32 @@ void Player::movePlayerUp()
 {
 	rect.pos.x = rect.pos.x;
 	rect.pos.y = rect.pos.y - rect.size.h;
+	position.x = rect.pos.x;
+	position.y = rect.pos.y;
 }
 
 void Player::movePlayerLeft()
 {
 	rect.pos.x = rect.pos.x - rect.size.w;
 	rect.pos.y = rect.pos.y;
+	position.x = rect.pos.x;
+	position.y = rect.pos.y;
 }
 
 void Player::movePlayerDown()
 {
 	rect.pos.x = rect.pos.x;
 	rect.pos.y = rect.pos.y + rect.size.h;
+	position.x = rect.pos.x;
+	position.y = rect.pos.y;
 }
 
 void Player::movePlayerRight()
 {
 	rect.pos.x = rect.pos.x + rect.size.w;
 	rect.pos.y = rect.pos.y;
+	position.x = rect.pos.x;
+	position.y = rect.pos.y;
 }
 
 void Player::changeColour()
@@ -75,7 +83,7 @@ void Player::resetColour()
 
 void Player::setSticks()
 {
-	sticks = true;
+	sticks = !sticks;
 }
 
 void Player::setDeadZone()

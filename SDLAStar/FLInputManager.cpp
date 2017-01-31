@@ -606,9 +606,15 @@ void InputManager::RemoveController(int id)
 }
 
 //* Set Delay of Controller Update
-void InputManager::SetControllerDelay(int delay)
+void InputManager::SetControllerButtonDelay(int delay)
 {
 	controllerButtonDelay = delay;
+}
+
+//* Set Delay of Controller Update
+void InputManager::SetControllerTriggerDelay(int delay)
+{
+	controllerTriggerDelay = delay;
 }
 
 //* Set the size of the Stick Dead Zone
