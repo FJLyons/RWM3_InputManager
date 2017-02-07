@@ -1,0 +1,23 @@
+﻿  stdafx.cpp
+  Renderer.cpp
+  LTimer.cpp
+  Game.cpp
+c:\users\gameuser\desktop\rwm3_inputmanager\demo\sdlastar\game.cpp(59): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\users\gameuser\desktop\rwm3_inputmanager\demo\sdlastar\game.cpp(110): warning C4060: switch statement contains no 'case' or 'default' labels
+  SDLAStar.cpp
+c:\users\gameuser\desktop\rwm3_inputmanager\demo\sdlastar\sdlastar.cpp(15): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Player.cpp
+  FLInputManager.cpp
+c:\users\gameuser\desktop\rwm3_inputmanager\demo\sdlastar\flinputmanager.cpp(655): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+c:\users\gameuser\desktop\rwm3_inputmanager\demo\sdlastar\flinputmanager.cpp(693): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
+  SDLAStar.vcxproj -> C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\x64\Debug\SDLAStar.exe
+  SDLAStar.vcxproj -> C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\x64\Debug\SDLAStar.pdb (Full PDB)
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\BUGS.txt
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\COPYING.txt
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\FLInputManager.inl
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\README-SDL.txt
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\README.txt
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\SDL2.dll
+  C:\Users\gameuser\Desktop\RWM3_InputManager\DEMO\SDLAStar\Dependencies\WhatsNew.txt
+          7 file(s) copied.
